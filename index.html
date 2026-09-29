@@ -1,0 +1,1597 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover">
+<meta name="theme-color" content="#0B5FBA">
+<title>ทะเบียนวัคซีนบุคลากร</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root {
+  --primary:#0B5FBA; --primary-rgb:11,95,186; --secondary:#12A594;
+  --background:#F2F5F9; --surface:#FFFFFF;
+  --sidebar-background:#0B3D6E; --sidebar-text:#FFFFFF; --topbar-background:#FFFFFF;
+  --text:#1F2937; --muted:#6B7280; --border:#E2E8F0; --danger:#DC2626; --warning:#D97706;
+  --sidebar-width:260px; --topbar-height:64px; --radius:14px;
+  --safe-top:env(safe-area-inset-top,0px); --safe-right:env(safe-area-inset-right,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px); --safe-left:env(safe-area-inset-left,0px);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%;width:100%;font-family:'Prompt',sans-serif;background:var(--background);color:var(--text);-webkit-tap-highlight-color:transparent;overflow-wrap:break-word}
+button,input,textarea,select{font-family:inherit}
+.hidden{display:none!important}
+.material-icons-outlined{vertical-align:middle;font-size:20px}
+a{color:var(--primary)}
+.btn{appearance:none;border:none;cursor:pointer;border-radius:12px;font-weight:600;font-size:14.5px;padding:12px 18px;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:transform .12s,box-shadow .12s,opacity .12s;white-space:nowrap}
+.btn:active{transform:scale(.97)} .btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-sm{padding:7px 12px;font-size:13px;border-radius:9px}
+.btn-primary{background:var(--primary);color:#fff;box-shadow:0 8px 20px rgba(var(--primary-rgb),.28)}
+.btn-secondary{background:rgba(var(--primary-rgb),.1);color:var(--primary)}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-danger-outline{background:transparent;border:1px solid var(--danger);color:var(--danger)}
+.btn-block{width:100%}
+#page-landing{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:calc(32px + var(--safe-top)) calc(20px + var(--safe-right)) calc(32px + var(--safe-bottom)) calc(20px + var(--safe-left));background:linear-gradient(180deg,rgba(var(--primary-rgb),.06) 0%,var(--background) 60%)}
+.landing-card{width:100%;max-width:420px;background:var(--surface);border-radius:20px;padding:36px 30px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.08)}
+.landing-card h1{font-size:20px;margin:10px 0 2px}
+.landing-card p{color:var(--muted);font-size:13.5px;margin:0 0 20px}
+.landing-tabs{display:flex;gap:6px;background:var(--background);border-radius:12px;padding:4px;margin-bottom:18px}
+.landing-tabs button{flex:1;border:0;background:transparent;padding:9px;border-radius:9px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer}
+.landing-tabs button.active{background:var(--surface);color:var(--primary);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+#page-app{display:flex;min-height:100dvh}
+.sidebar{width:var(--sidebar-width);flex-shrink:0;position:fixed;inset:0 auto 0 0;z-index:40;display:flex;flex-direction:column;color:var(--sidebar-text);
+  background:radial-gradient(120% 90% at 0% 0%,rgba(255,255,255,.10) 0%,rgba(255,255,255,0) 55%),linear-gradient(180deg,rgba(255,255,255,.04) 0%,rgba(0,0,0,.16) 100%),var(--sidebar-background);
+  box-shadow:3px 0 24px rgba(0,0,0,.16);padding:var(--safe-top) 0 var(--safe-bottom) var(--safe-left);transition:transform .25s ease}
+.sidebar-header{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:24px 18px 18px;border-bottom:1px solid rgba(255,255,255,.12)}
+.sidebar-logo{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.14);box-shadow:0 0 0 3px rgba(255,255,255,.14),0 6px 16px rgba(0,0,0,.18)}
+.sidebar-header-text{font-size:14px;font-weight:700;line-height:1.4}
+.sidebar-nav{flex:1;padding:14px 12px;overflow-y:auto;display:flex;flex-direction:column;gap:3px}
+.sidebar-nav-group{font-size:10.5px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.06em;padding:12px 14px 4px}
+.sidebar-nav-item{position:relative;display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:12px;cursor:pointer;user-select:none;font-size:13.5px;font-weight:500;color:rgba(255,255,255,.75);transition:background .18s,color .18s,transform .18s,box-shadow .18s}
+.sidebar-nav-item:hover{background:rgba(255,255,255,.09);color:#fff;transform:translateX(3px)}
+.sidebar-nav-item.active{background:rgba(255,255,255,.15);color:#fff;font-weight:600;box-shadow:inset 0 0 0 1px rgba(255,255,255,.10),0 4px 12px rgba(0,0,0,.12)}
+.sidebar-nav-item.active::before{content:"";position:absolute;top:8px;bottom:8px;left:-6px;width:4px;border-radius:4px;background:var(--secondary);box-shadow:0 0 8px rgba(var(--primary-rgb),.6)}
+.nav-badge{margin-left:auto;min-width:19px;padding:1px 6px;border-radius:20px;text-align:center;background:var(--danger);color:#fff;font-size:10.5px;font-weight:700}
+.sidebar-footer{padding:14px 18px;font-size:11px;color:rgba(255,255,255,.55);border-top:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.10)}
+.sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:30}
+.main-area{flex:1;margin-left:var(--sidebar-width);display:flex;flex-direction:column;min-height:100dvh;min-width:0}
+.topbar{position:sticky;top:0;z-index:20;height:var(--topbar-height);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 calc(20px + var(--safe-right)) 0 calc(20px + var(--safe-left));background:var(--topbar-background);border-bottom:1px solid var(--border)}
+.topbar-title{font-size:17px;font-weight:700}
+.topbar-menu-btn{display:none;border:0;background:transparent;cursor:pointer;padding:6px;border-radius:10px}
+.content{flex:1;width:100%;max-width:1440px;margin:0 auto;overflow-x:hidden;padding:20px calc(20px + var(--safe-right)) calc(20px + var(--safe-bottom)) calc(20px + var(--safe-left))}
+.page-section{display:none} .page-section.active{display:block;animation:sectionFade .3s cubic-bezier(.16,.84,.44,1) both}
+.section-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+.section-header h2{margin:0;font-size:19px}
+.bottom-nav{display:none;position:fixed;inset:auto 0 0 0;z-index:45;background:var(--topbar-background);border-top:1px solid var(--border);box-shadow:0 -2px 16px rgba(15,23,42,.08);padding:6px calc(4px + var(--safe-right)) calc(6px + var(--safe-bottom)) calc(4px + var(--safe-left))}
+.bottom-nav .bottom-nav-item{flex:1;flex-direction:column;justify-content:center;gap:2px;min-height:46px;padding:5px 2px;font-size:10px;font-weight:600;text-align:center;color:var(--muted);border-radius:10px}
+.bottom-nav .bottom-nav-item.active{color:var(--primary);background:rgba(var(--primary-rgb),.1);box-shadow:none}
+.bottom-nav .bottom-nav-item.active::before{display:none}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.card-sub{color:var(--muted);font-size:12.5px;line-height:1.55}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,240px));gap:12px;margin-bottom:18px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:6px;transition:transform .18s,box-shadow .18s}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(15,23,42,.08)}
+.stat-label{font-size:12px;color:var(--muted)} .stat-value{font-size:27px;font-weight:700}
+.stat-sub{font-size:11.5px;color:var(--muted)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px} .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.form-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+.form-field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.form-field.full{grid-column:1/-1}
+.form-field label{font-size:12.5px;font-weight:600} .form-field .req{color:var(--danger)}
+.form-field input,.form-field select,.form-field textarea{width:100%;border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:14px;background:var(--surface);color:var(--text);min-height:42px;transition:border-color .15s,box-shadow .15s}
+.form-field input:focus,.form-field select:focus,.form-field textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(var(--primary-rgb),.15)}
+.field-error{color:var(--danger);font-size:12px;display:none}
+.field-hint{color:var(--muted);font-size:11.5px}
+.choice-group{display:flex;flex-wrap:wrap;gap:8px}
+.choice-pill{display:flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:10px;padding:10px 14px;min-height:40px;font-size:13.5px;cursor:pointer;user-select:none;transition:border-color .15s,background .15s}
+.choice-pill:has(input:checked){border-color:var(--primary);background:rgba(var(--primary-rgb),.07)}
+.form-actions{display:flex;gap:10px;margin-top:6px;flex-wrap:wrap}
+.table-wrap{overflow-x:auto}
+table.data-table{width:100%;border-collapse:collapse;font-size:13px;min-width:560px}
+.data-table th{text-align:left;padding:9px 10px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;background:var(--surface)}
+.data-table td{padding:10px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+.data-table tbody tr:hover{background:rgba(var(--primary-rgb),.04)}
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;gap:3px}
+.badge-complete{background:rgba(18,165,148,.12);color:var(--secondary)}
+.badge-incomplete{background:rgba(220,38,38,.10);color:var(--danger)}
+.badge-warning{background:rgba(217,119,6,.12);color:var(--warning)}
+.badge-neutral{background:rgba(107,114,128,.12);color:#6B7280}
+.badge-info{background:rgba(11,95,186,.10);color:var(--primary)}
+.empty-state{text-align:center;padding:34px 12px;color:var(--muted)}
+#app-progress{position:fixed;inset:0 0 auto 0;height:3px;z-index:1200;pointer-events:none;overflow:hidden;opacity:0;transition:opacity .2s}
+#app-progress.active{opacity:1}
+#app-progress::before{content:"";position:absolute;inset:0;width:40%;background:var(--primary);animation:appProgressSlide 1.1s ease-in-out infinite}
+.skeleton{position:relative;overflow:hidden;background:var(--border);border-radius:8px;display:block;height:14px}
+.skeleton::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);transform:translateX(-100%);animation:skShimmer 1.3s infinite}
+#toast-container{position:fixed;z-index:1600;left:50%;transform:translateX(-50%);bottom:calc(22px + var(--safe-bottom));display:flex;flex-direction:column;gap:8px;align-items:center;width:100%;max-width:420px;padding:0 calc(16px + var(--safe-right)) 0 calc(16px + var(--safe-left));pointer-events:none}
+.toast{background:#1F2937;color:#fff;padding:12px 18px;border-radius:12px;font-size:13px;width:100%;display:flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(0,0,0,.2);animation:toastIn .2s ease;pointer-events:auto}
+.toast.success{background:#0F766E} .toast.error{background:#B91C1C} .toast.warning{background:#B45309}
+.modal-overlay{position:fixed;inset:0;z-index:1500;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:calc(20px + var(--safe-top)) calc(20px + var(--safe-right)) calc(20px + var(--safe-bottom)) calc(20px + var(--safe-left))}
+.modal-box{background:var(--surface);border-radius:18px;padding:22px 20px;width:100%;max-width:480px;max-height:calc(100dvh - 40px);overflow-y:auto}
+.modal-box.wide{max-width:760px}
+.modal-close{position:absolute;top:14px;right:16px;cursor:pointer;color:var(--muted)}
+.alert-box{display:flex;gap:9px;align-items:flex-start;padding:11px 13px;border-radius:12px;font-size:13px;margin-bottom:10px}
+.alert-box.danger{background:linear-gradient(135deg,rgba(220,38,38,.09),rgba(217,119,6,.06));border:1px solid rgba(220,38,38,.28);border-left:5px solid var(--danger)}
+.alert-box.warning{background:rgba(217,119,6,.08);border:1px solid rgba(217,119,6,.25);border-left:5px solid var(--warning)}
+.alert-box.info{background:rgba(11,95,186,.06);border:1px solid rgba(11,95,186,.2);border-left:5px solid var(--primary)}
+.alert-box.success{background:rgba(18,165,148,.08);border:1px solid rgba(18,165,148,.25);border-left:5px solid var(--secondary)}
+.tabs{display:flex;gap:4px;background:var(--background);border-radius:12px;padding:4px;margin-bottom:16px;flex-wrap:wrap}
+.tabs button{border:0;background:transparent;padding:9px 14px;border-radius:9px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer}
+.tabs button.active{background:var(--surface);color:var(--primary);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.tabpane{display:none} .tabpane.active{display:block}
+.progress-bar{height:8px;background:var(--border);border-radius:20px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--secondary));border-radius:20px;transition:width .4s}
+.kv{display:grid;grid-template-columns:120px 1fr;gap:6px 10px;font-size:13px}
+.kv b{color:var(--muted);font-weight:500}
+.chip{display:inline-flex;align-items:center;gap:4px;background:var(--background);border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:12px}
+.dropzone{border:2px dashed var(--border);border-radius:14px;padding:30px 16px;text-align:center;color:var(--muted);cursor:pointer;transition:border-color .15s,background .15s}
+.dropzone:hover,.dropzone.drag{border-color:var(--primary);background:rgba(var(--primary-rgb),.04)}
+.step-track{display:flex;gap:6px;margin-bottom:16px}
+.step-track div{flex:1;height:5px;border-radius:4px;background:var(--border)}
+.step-track div.done{background:var(--secondary)} .step-track div.current{background:var(--primary)}
+.issue-row{display:flex;gap:8px;padding:8px 10px;border-radius:10px;font-size:12.5px;margin-bottom:4px;align-items:flex-start}
+.issue-row.error{background:rgba(220,38,38,.08);border-left:4px solid var(--danger)}
+.issue-row.warn{background:rgba(217,119,6,.08);border-left:4px solid var(--warning)}
+.issue-row.info{background:rgba(11,95,186,.06);border-left:4px solid var(--primary)}
+.dept-pill{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border:1px solid var(--border);border-radius:10px;margin-bottom:6px;font-size:13px}
+.avatar{width:38px;height:38px;border-radius:50%;background:rgba(var(--primary-rgb),.12);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0}
+.staff-row{display:flex;align-items:center;gap:10px;cursor:pointer}
+.color-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.color-row input[type=color]{width:44px;height:38px;border:1px solid var(--border);border-radius:8px;padding:2px;background:none}
+@keyframes sectionFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes appProgressSlide{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
+@keyframes skShimmer{to{transform:translateX(100%)}}
+@keyframes cardRiseIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.page-section.active .card,.page-section.active .stat-card{animation:cardRiseIn .35s cubic-bezier(.16,.84,.44,1) both;animation-delay:calc(var(--reveal-i,0) * 40ms)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:900px){
+  .sidebar{transform:translateX(-100%)} .sidebar.open{transform:none} .sidebar-backdrop.open{display:block}
+  .main-area{margin-left:0} .topbar-menu-btn{display:inline-flex} .bottom-nav{display:flex}
+  .content{padding-bottom:calc(80px + var(--safe-bottom))}
+  .grid-2,.grid-3,.form-grid{grid-template-columns:1fr}
+}
+@media (max-width:640px){ .modal-box{padding:18px 16px} }
+
+/* ===== Modern UI layer (MaterialM-inspired) ===== */
+:root{--background:#F4F7FB;--radius:18px;--shadow:0 4px 24px rgba(17,28,45,.06);--shadow-lg:0 18px 48px rgba(17,28,45,.16)}
+body{font-family:'Prompt','Plus Jakarta Sans',sans-serif;font-size:14.5px;line-height:1.55;background:var(--background)}
+.stat-value,.stat-card .stat-value,.nav-badge{font-family:'Plus Jakarta Sans','Prompt',sans-serif;letter-spacing:-.02em}
+.landing-wrap{min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:calc(32px + var(--safe-top)) 20px calc(32px + var(--safe-bottom));background:radial-gradient(60% 50% at 15% 10%,rgba(var(--primary-rgb),.18),transparent 70%),radial-gradient(50% 45% at 90% 90%,rgba(18,165,148,.16),transparent 70%),var(--background)}
+.landing-card{border-radius:24px;box-shadow:var(--shadow-lg);border:1px solid rgba(255,255,255,.7);backdrop-filter:blur(8px);animation:cardRiseIn .5s both}
+.landing-card h1{font-weight:700;letter-spacing:-.01em}
+.card,.stat-card{border:0;border-radius:var(--radius);box-shadow:var(--shadow)}
+.card{padding:20px}.stat-card:hover{box-shadow:0 14px 34px rgba(17,28,45,.12)}
+.stat-card{position:relative;padding:18px}.stat-ico{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:rgba(var(--primary-rgb),.12);color:var(--primary);font-size:22px;margin-bottom:4px}
+.stat-value{font-size:30px;font-weight:800}
+.btn{border-radius:999px;padding:11px 22px;font-weight:600}.btn-sm{padding:6px 14px}
+.btn-primary{background:linear-gradient(135deg,var(--primary),rgba(var(--primary-rgb),.82));box-shadow:0 8px 20px rgba(var(--primary-rgb),.3)}
+.btn-primary:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 12px 26px rgba(var(--primary-rgb),.38)}
+.btn-secondary:hover{background:rgba(var(--primary-rgb),.18)}.btn-outline:hover{background:var(--background)}
+.sidebar{border-radius:0 24px 24px 0;box-shadow:8px 0 32px rgba(11,61,110,.18)}
+.sidebar-nav-item{border-radius:999px;padding:11px 16px}.sidebar-nav-item.active::before{display:none}
+.sidebar-nav-item.active{background:#fff;color:var(--sidebar-background);font-weight:700;box-shadow:0 6px 16px rgba(0,0,0,.18)}
+.sidebar-nav-item.active .material-icons-outlined{color:var(--primary)}
+.topbar{background:rgba(255,255,255,.8);backdrop-filter:blur(14px);border-bottom:1px solid rgba(226,232,240,.7)}
+.topbar-title{font-size:18px;font-weight:700}
+.content{padding-top:24px}.section-header h2{font-size:21px;font-weight:700;letter-spacing:-.01em}
+.data-table th{background:var(--background);border-bottom:0;text-transform:none;padding:11px 12px}
+.data-table th:first-child{border-radius:12px 0 0 12px}.data-table th:last-child{border-radius:0 12px 12px 0}
+.data-table td{padding:12px;border-bottom:1px dashed var(--border)}.data-table tbody tr{transition:background .15s}
+.table-wrap{border-radius:12px}
+.badge{padding:4px 11px;font-size:11.5px}
+.form-field input,.form-field select,.form-field textarea,#topbar-campaign{border-radius:12px;border:1.5px solid var(--border);background:#fff}
+.form-field input:focus,.form-field select:focus,.form-field textarea:focus{box-shadow:0 0 0 4px rgba(var(--primary-rgb),.14)}
+.choice-pill{border-radius:999px;border-width:1.5px}.choice-pill:has(input:checked){box-shadow:0 0 0 3px rgba(var(--primary-rgb),.1)}
+.tabs{border-radius:999px;background:#fff;box-shadow:var(--shadow);display:inline-flex}.tabs button{border-radius:999px;padding:9px 18px}
+.tabs button.active{background:rgba(var(--primary-rgb),.12);color:var(--primary);box-shadow:none}
+.modal-overlay{background:rgba(15,23,42,.5);backdrop-filter:blur(4px);animation:toastIn .2s}
+.modal-box{border-radius:24px;box-shadow:var(--shadow-lg);padding:26px 24px;animation:cardRiseIn .28s both}
+.modal-close{width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--background)}
+.toast{border-radius:16px;backdrop-filter:blur(6px)}.alert-box{border-radius:14px}
+.progress-bar{height:10px}.dropzone{border-radius:18px;background:rgba(var(--primary-rgb),.02)}
+.avatar{background:linear-gradient(135deg,rgba(var(--primary-rgb),.18),rgba(18,165,148,.18))}
+.pf-actions{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}.pf-sec{margin:12px 0;padding:12px 14px;border-radius:14px;background:var(--background);font-size:13px}
+.pf-sec b{display:block;margin-bottom:6px}.pf-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0;border-bottom:1px dashed var(--border)}.pf-row:last-child{border:0}
+.staff-row-tr:hover{background:rgba(var(--primary-rgb),.05)!important}
+@media (max-width:900px){.sidebar{border-radius:0 24px 24px 0}.bottom-nav{border-radius:22px 22px 0 0;box-shadow:0 -8px 30px rgba(17,28,45,.12)}.tabs{display:flex;overflow-x:auto}}
+
+/* ---------- Loading overlay (branded) ---------- */
+.loading-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:99999;padding:20px;
+  background:radial-gradient(60% 50% at 50% 42%,rgba(var(--primary-rgb),.10),transparent 70%),rgba(244,247,251,.86);
+  -webkit-backdrop-filter:blur(8px) saturate(1.2);backdrop-filter:blur(8px) saturate(1.2)}
+.loading-overlay.show{display:flex;animation:ldFade .25s ease both}
+.ld-bg{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.ld-blob{position:absolute;border-radius:50%;filter:blur(50px);opacity:.32;animation:ldFloat 9s ease-in-out infinite}
+.ld-blob.b1{width:260px;height:260px;left:12%;top:14%;background:rgba(var(--primary-rgb),.6)}
+.ld-blob.b2{width:300px;height:300px;right:8%;bottom:8%;background:var(--secondary);animation-delay:-4s}
+.loading-box{position:relative;text-align:center;min-width:240px}
+.ld-stage{position:relative;width:150px;height:150px;margin:0 auto}
+.ld-stage>*{position:absolute}
+.ld-pulse{inset:22px;border-radius:50%;border:2px solid rgba(var(--primary-rgb),.5);animation:ldPulse 2.2s ease-out infinite}
+.ld-pulse.p2{animation-delay:1.1s}
+.ld-ring{inset:0;width:100%;height:100%}
+.ld-ring.r1{animation:ldSpin 1.3s linear infinite}
+.ld-ring.r2{inset:12px;width:calc(100% - 24px);height:calc(100% - 24px);animation:ldSpin 4s linear infinite reverse;opacity:.55}
+.ld-orbit{inset:0;animation:ldSpin 2.6s linear infinite}
+.ld-orbit i{position:absolute;left:50%;top:-4px;width:9px;height:9px;margin-left:-4.5px;border-radius:50%;background:var(--primary);box-shadow:0 0 10px 2px rgba(var(--primary-rgb),.55)}
+.ld-orbit.o2{inset:10px;animation-duration:3.8s;animation-direction:reverse}
+.ld-orbit.o2 i{width:7px;height:7px;margin-left:-3.5px;background:var(--secondary);box-shadow:0 0 10px 2px rgba(18,165,148,.55)}
+.ld-orbit.o3{inset:-6px;animation-duration:5.2s}
+.ld-orbit.o3 i{width:6px;height:6px;margin-left:-3px;background:#F59E0B;box-shadow:0 0 10px 2px rgba(245,158,11,.55)}
+.ld-core{left:50%;top:50%;width:92px;height:92px;margin:-46px 0 0 -46px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 30px rgba(var(--primary-rgb),.25),inset 0 0 0 1px rgba(var(--primary-rgb),.08);animation:ldBeat 1.6s ease-in-out infinite}
+.loading-icon{width:62px;height:62px;object-fit:contain;animation:ldTilt 3.2s ease-in-out infinite}
+.ld-plus{font:700 15px/1 'Plus Jakarta Sans',sans-serif;color:var(--secondary);opacity:0;animation:ldRise 3s ease-in infinite}
+.ld-plus.a{left:6px;top:96px}.ld-plus.b{right:4px;top:80px;color:var(--primary);animation-delay:1s}.ld-plus.c{left:30px;top:22px;font-size:12px;animation-delay:2s}
+.loading-text{margin-top:22px;font-size:15px;font-weight:600;color:var(--primary);display:flex;align-items:center;justify-content:center}
+.ld-dots{display:inline-flex;margin-left:5px;gap:3px;padding-top:4px}
+.ld-dots i{width:5px;height:5px;border-radius:50%;background:currentColor;animation:ldDot 1.2s ease-in-out infinite both}
+.ld-dots i:nth-child(2){animation-delay:.16s}.ld-dots i:nth-child(3){animation-delay:.32s}
+.ld-sub{margin-top:4px;font-size:12px;color:var(--muted)}
+.ld-bar{width:170px;height:4px;margin:14px auto 0;border-radius:4px;background:rgba(var(--primary-rgb),.14);overflow:hidden}
+.ld-bar span{display:block;height:100%;width:40%;border-radius:4px;background:linear-gradient(90deg,var(--primary),var(--secondary));animation:ldBar 1.3s ease-in-out infinite}
+@keyframes ldFade{from{opacity:0}to{opacity:1}}
+@keyframes ldSpin{to{transform:rotate(360deg)}}
+@keyframes ldPulse{0%{transform:scale(.7);opacity:.7}100%{transform:scale(1.35);opacity:0}}
+@keyframes ldBeat{0%,100%{transform:scale(1)}14%{transform:scale(1.08)}28%{transform:scale(1)}42%{transform:scale(1.11)}70%{transform:scale(1)}}
+@keyframes ldTilt{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}
+@keyframes ldRise{0%{transform:translateY(8px) scale(.6);opacity:0}25%{opacity:.9}100%{transform:translateY(-34px) scale(1.1);opacity:0}}
+@keyframes ldDot{0%,80%,100%{transform:scale(.5);opacity:.4}40%{transform:scale(1);opacity:1}}
+@keyframes ldBar{0%{transform:translateX(-110%)}100%{transform:translateX(280%)}}
+@keyframes ldFloat{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,-24px)}}
+@keyframes btnSpin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){
+  .loading-overlay .ld-ring.r1{animation:ldSpin 2.4s linear infinite!important}
+  .loading-overlay .ld-bar span{animation:ldBar 2s ease-in-out infinite!important}
+}
+
+/* ---------- ปุ่มกำลังทำงาน (แสดงทุกครั้งที่กดปุ่ม) ---------- */
+.btn-google{--spin:#4285F4}
+.btn-primary,.btn-danger,.btn-portal{--spin:#fff}
+.btn-danger-outline{--spin:var(--danger)}
+.btn-busy{position:relative;pointer-events:none;cursor:progress;color:transparent;text-shadow:none}
+.btn-busy>*,.btn-busy .material-icons-outlined{visibility:hidden}
+.btn-busy:disabled{opacity:1!important}
+.btn-busy::after{content:"";position:absolute;left:50%;top:50%;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;border:2.5px solid var(--spin,var(--primary));border-right-color:transparent;animation:btnSpin .7s linear infinite}
+.tabs button.btn-busy::after,.seg button.btn-busy::after,.tab-btn.btn-busy::after{position:static;display:inline-block;vertical-align:middle;margin:0 0 0 8px;width:12px;height:12px;border-width:2px}
+.tabs button.btn-busy>*,.seg button.btn-busy>*,.tab-btn.btn-busy>*{visibility:visible}
+
+/* ---------- หน้าล็อกอิน: ปุ่ม Google (มาตรฐานสากล) / ตัวคั่น / ปุ่มบุคลากร ---------- */
+.or-divider{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:12px;margin:2px 0 12px}
+.or-divider::before,.or-divider::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border) 30%,var(--border) 70%,transparent)}
+.btn-google{appearance:none;width:100%;height:46px;display:flex;align-items:center;justify-content:center;gap:12px;padding:0 18px;border-radius:999px;border:1px solid #dadce0;background:#fff;color:#3c4043;font:500 14.5px/1 'Prompt','Roboto',Arial,sans-serif;letter-spacing:.2px;cursor:pointer;transition:background .15s,box-shadow .15s,border-color .15s,transform .12s}
+.btn-google .g-logo{width:20px;height:20px;flex:none}
+.btn-google:hover{background:#f8faff;border-color:#d2e3fc;box-shadow:0 1px 2px rgba(60,64,67,.30),0 1px 3px 1px rgba(60,64,67,.15)}
+.btn-google:active{background:#eef3fd;transform:scale(.985)}
+.btn-google:focus-visible{outline:none;box-shadow:0 0 0 4px rgba(66,133,244,.28)}
+.btn-google:disabled{opacity:.6;cursor:not-allowed}
+.btn-portal{appearance:none;position:relative;overflow:hidden;width:100%;display:flex;align-items:center;gap:14px;text-align:left;padding:13px 16px;border:0;border-radius:18px;cursor:pointer;color:#fff;
+  background:linear-gradient(120deg,#0B5FBA,#0E7FA8 55%,#0E8F84);
+  background:linear-gradient(120deg,var(--primary),color-mix(in srgb,var(--secondary) 72%,#04302b));
+  background-size:170% 170%;animation:bpShift 7s ease-in-out infinite;
+  box-shadow:0 10px 24px rgba(var(--primary-rgb),.28),inset 0 1px 0 rgba(255,255,255,.25);transition:transform .18s,box-shadow .18s}
+.btn-portal::before{content:"";position:absolute;top:0;left:-70%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.34),transparent);transform:skewX(-20deg);animation:bpShine 3.8s ease-in-out infinite;pointer-events:none}
+.btn-portal:hover{transform:translateY(-2px);box-shadow:0 16px 32px rgba(var(--primary-rgb),.38),inset 0 1px 0 rgba(255,255,255,.3)}
+.btn-portal:active{transform:scale(.985)}
+.btn-portal:focus-visible{outline:none;box-shadow:0 0 0 4px rgba(var(--primary-rgb),.3)}
+.bp-ico{flex:none;width:44px;height:44px;border-radius:14px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
+.bp-ico .material-icons-outlined{font-size:24px;color:#fff}
+.bp-txt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.bp-txt b{font-size:14.5px;font-weight:600;line-height:1.3}
+.bp-txt small{font-size:12px;opacity:.9;line-height:1.3}
+.bp-arrow{flex:none;margin-left:auto;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;transition:transform .2s}
+.btn-portal:hover .bp-arrow{transform:translateX(4px)}
+@keyframes bpShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+@keyframes bpShine{0%,55%{left:-70%}100%{left:130%}}
+
+/* ---------- แท็บ "ค้นหาประวัติ" ในพอร์ทัลบุคลากร ---------- */
+.seg{display:flex;gap:6px;background:var(--background);border-radius:14px;padding:4px;margin:0 0 14px}
+.seg button{flex:1;border:0;background:transparent;padding:10px 8px;border-radius:11px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .15s,color .15s,box-shadow .15s}
+.seg button.active{background:#fff;color:var(--primary);box-shadow:0 2px 10px rgba(17,28,45,.10)}
+.find-head{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:linear-gradient(135deg,rgba(var(--primary-rgb),.08),rgba(18,165,148,.08));margin-bottom:6px}
+.find-name{font-weight:700;font-size:16px}.find-dept{font-size:12.5px;color:var(--muted)}
+.find-head .badge{margin-left:auto}
+</style>
+</head>
+<body>
+<div id="app-progress"></div>
+
+<!-- ===== หน้าเข้าสู่ระบบ (เจ้าหน้าที่/ผู้ดูแล) ===== -->
+<div id="page-landing" class="landing-wrap">
+  <div class="landing-card">
+    <div class="sidebar-logo" style="background:rgba(var(--primary-rgb),.12);margin:0 auto"><span class="material-icons-outlined" style="color:var(--primary);font-size:28px">vaccines</span></div>
+    <h1 id="landing-sys-name">ทะเบียนวัคซีนบุคลากร</h1>
+    <p id="landing-welcome">ลงทะเบียน บันทึก และติดตามวัคซีนของบุคลากรทางการแพทย์และสาธารณสุข</p>
+    <div class="form-field full" style="text-align:left"><label>ชื่อผู้ใช้</label><input id="login-name" placeholder="เช่น admin" autocomplete="username"></div>
+    <div class="form-field full" style="text-align:left"><label>PIN</label><input id="login-pin" type="password" placeholder="รหัส PIN" autocomplete="current-password"></div>
+    <div class="field-error" id="login-error" style="display:block;text-align:left;min-height:16px"></div>
+    <button class="btn btn-primary btn-block" id="btn-login"><span class="material-icons-outlined">login</span> เข้าสู่ระบบ</button>
+    <div id="google-login-wrap" style="margin-top:14px">
+      <div class="or-divider"><span>หรือ</span></div>
+      <button type="button" class="btn-google" id="btn-google-login" data-noload><svg class="g-logo" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>เข้าสู่ระบบด้วย Google</span></button>
+    </div>
+    <div class="or-divider" style="margin-top:20px"><span>สำหรับบุคลากร</span></div>
+    <button type="button" class="btn-portal" id="btn-open-staff-portal" data-nav="กำลังเปิดหน้าบุคลากร...">
+      <span class="bp-ico"><span class="material-icons-outlined">badge</span></span>
+      <span class="bp-txt"><b>บุคลากร: ดูประวัติวัคซีนของตนเอง</b><small>ตรวจสอบสถานะวัคซีนและนัดหมายของคุณ</small></span>
+      <span class="bp-arrow material-icons-outlined">arrow_forward</span>
+    </button>
+    <div style="margin-top:14px;font-size:12.5px">
+      <a href="#" id="link-self-register" data-nav="กำลังเปิดหน้าลงทะเบียน...">บุคลากร: ลงทะเบียน/แจ้งความประสงค์ด้วยตนเอง</a>
+    </div>
+    <div id="build-tag" style="margin-top:10px;font-size:10.5px;color:#9aa5b1">build 0929-V1</div>
+  </div>
+</div>
+
+<!-- ===== หน้าลงทะเบียนด้วยตนเอง (สาธารณะ ไม่ต้องล็อกอิน) ===== -->
+<div id="page-self" class="hidden">
+  <div class="landing-wrap" style="position:static">
+    <div class="landing-card" style="max-width:480px;text-align:left">
+      <div style="text-align:center"><div class="sidebar-logo" style="background:rgba(var(--primary-rgb),.12);margin:0 auto"><span class="material-icons-outlined" style="color:var(--primary);font-size:28px">how_to_reg</span></div>
+      <h1>ลงทะเบียนบุคลากรด้วยตนเอง</h1></div>
+      <div id="self-msg" class="alert-box info">กรอกข้อมูลให้ครบถ้วน ระบบจะใช้ติดตามการนัดฉีดวัคซีนของท่าน</div>
+      <form id="self-form">
+        <div class="form-grid" id="self-fields"></div>
+        <div class="form-field full" id="self-campaign-wrap">
+          <label>ความประสงค์รับวัคซีนในแคมเปญที่เปิดอยู่</label>
+          <select id="self-campaign"></select>
+        </div>
+        <div class="form-field full hidden" id="self-intent-wrap">
+          <label>ท่านประสงค์รับวัคซีนหรือไม่</label>
+          <div class="choice-group">
+            <label class="choice-pill"><input type="radio" name="self-intent" value="want" checked><span>ประสงค์รับ</span></label>
+            <label class="choice-pill"><input type="radio" name="self-intent" value="decline"><span>ไม่ประสงค์รับ</span></label>
+            <label class="choice-pill"><input type="radio" name="self-intent" value="unsure"><span>ยังไม่แน่ใจ</span></label>
+          </div>
+        </div>
+        <div class="form-field full hidden" id="self-code-wrap"><label>รหัสลงทะเบียน (รับจากหน่วยงาน)</label><input id="self-code"></div>
+        <button type="submit" class="btn btn-primary btn-block" id="btn-self-submit"><span class="material-icons-outlined">send</span> ส่งข้อมูล</button>
+      </form>
+      <div style="margin-top:14px;font-size:12.5px;text-align:center"><a href="#" id="link-back-login" data-nav="กำลังกลับหน้าเข้าสู่ระบบ...">← กลับหน้าเข้าสู่ระบบเจ้าหน้าที่</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== พอร์ทัลบุคลากร: ค้นหาประวัติวัคซีนของตนเอง (ไม่ต้องล็อกอิน) ===== -->
+<div id="page-staff" class="hidden">
+  <div class="landing-wrap" style="position:static">
+    <div class="landing-card" style="max-width:620px;text-align:left">
+      <div style="text-align:center"><div class="sidebar-logo" style="background:rgba(var(--primary-rgb),.12);margin:0 auto"><span class="material-icons-outlined" style="color:var(--primary);font-size:28px">badge</span></div>
+      <h1>ประวัติวัคซีนของฉัน</h1></div>
+      <div id="sv-auth">
+        <div id="sv-pane-find">
+          <div class="alert-box info">ตรวจสอบประวัติวัคซีนได้ทันที ไม่ต้องสมัครสมาชิก ค้นหาด้วยเลขบัตรประชาชน 13 หลัก หรือเบอร์โทรศัพท์ที่ลงทะเบียนไว้กับหน่วยงาน</div>
+          <div class="seg" id="sv-find-mode">
+            <button type="button" data-mode="cid" class="active"><span class="material-icons-outlined">badge</span> เลขบัตรประชาชน</button>
+            <button type="button" data-mode="phone"><span class="material-icons-outlined">phone_iphone</span> เบอร์โทรศัพท์</button>
+          </div>
+          <div class="form-field full"><label id="sv-f-label">เลขบัตรประชาชน (13 หลัก)</label><input id="sv-f-input" inputmode="numeric" maxlength="17" placeholder="x-xxxx-xxxxx-xx-x" autocomplete="off"></div>
+          <div class="field-error" id="sv-f-error" style="display:block;min-height:16px"></div>
+          <button type="button" class="btn btn-primary btn-block" id="btn-sv-find"><span class="material-icons-outlined">search</span> ค้นหาประวัติวัคซีน</button>
+          <div id="sv-find-result" style="margin-top:14px"></div>
+        </div>
+        <div style="margin-top:14px;font-size:12.5px;text-align:center"><a href="#" id="link-sv-back" data-nav="กำลังกลับหน้าเข้าสู่ระบบ...">← กลับหน้าเข้าสู่ระบบเจ้าหน้าที่</a></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== แอปหลัก ===== -->
+<div id="page-app" class="hidden">
+  <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo"><span class="material-icons-outlined">vaccines</span></div>
+      <div class="sidebar-header-text" id="sidebar-sys-name">ทะเบียนวัคซีนบุคลากร</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-nav-item active" data-page="dashboard"><span class="material-icons-outlined">dashboard</span><span>ภาพรวม</span></div>
+      <div class="sidebar-nav-item" data-page="staff"><span class="material-icons-outlined">groups</span><span>ทะเบียนบุคลากร</span></div>
+      <div class="sidebar-nav-item" data-page="record"><span class="material-icons-outlined">vaccines</span><span>บันทึกการฉีด</span></div>
+      <div class="sidebar-nav-item" data-page="followup"><span class="material-icons-outlined">event_available</span><span>ติดตาม/นัดหมาย</span><span class="nav-badge hidden" id="badge-due">0</span></div>
+      <div class="sidebar-nav-item" data-page="stock"><span class="material-icons-outlined">inventory_2</span><span>คลังวัคซีน (Lot)</span><span class="nav-badge hidden" id="badge-stock">0</span></div>
+      <div class="sidebar-nav-item" data-page="campaigns"><span class="material-icons-outlined">campaign</span><span>แคมเปญวัคซีน</span></div>
+      <div class="sidebar-nav-item" data-page="quality"><span class="material-icons-outlined">fact_check</span><span>คุณภาพข้อมูล</span><span class="nav-badge hidden" id="badge-dq">0</span></div>
+      <div class="sidebar-nav-item" data-page="import"><span class="material-icons-outlined">upload_file</span><span>นำเข้าข้อมูลเดิม</span></div>
+      <div class="sidebar-nav-item" data-page="settings"><span class="material-icons-outlined">settings</span><span>ตั้งค่าระบบ</span></div>
+    </nav>
+    <div class="sidebar-footer">
+      <div id="sidebar-footer-msg">โรงพยาบาลสันทราย</div>
+      <div id="sidebar-user" style="margin-top:6px;font-size:12px"></div>
+      <div style="margin-top:8px"><a href="#" id="link-logout" data-noload style="color:rgba(255,255,255,.75);font-size:12px">ออกจากระบบ</a></div>
+    </div>
+  </aside>
+
+  <nav class="bottom-nav">
+    <div class="bottom-nav-item sidebar-nav-item active" data-page="dashboard"><span class="material-icons-outlined">dashboard</span><span>ภาพรวม</span></div>
+    <div class="bottom-nav-item sidebar-nav-item" data-page="staff"><span class="material-icons-outlined">groups</span><span>บุคลากร</span></div>
+    <div class="bottom-nav-item sidebar-nav-item" data-page="record"><span class="material-icons-outlined">vaccines</span><span>บันทึก</span></div>
+    <div class="bottom-nav-item sidebar-nav-item" data-page="followup"><span class="material-icons-outlined">event_available</span><span>ติดตาม</span></div>
+    <div class="bottom-nav-item sidebar-nav-item" data-page="stock"><span class="material-icons-outlined">inventory_2</span><span>คลัง</span></div>
+  </nav>
+
+  <div class="main-area">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="topbar-menu-btn" id="btn-open-sidebar" aria-label="เมนู"><span class="material-icons-outlined">menu</span></button>
+        <div class="topbar-title" id="topbar-title">ภาพรวม</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <select id="topbar-campaign" style="min-height:36px;border-radius:9px;border:1px solid var(--border);padding:4px 8px;font-size:12.5px;max-width:220px"></select>
+        <div style="font-size:12px;color:var(--muted)" id="topbar-clock"></div>
+      </div>
+    </div>
+    <main class="content">
+
+      <!-- DASHBOARD -->
+      <section class="page-section active" id="section-dashboard">
+        <div class="section-header"><h2>ภาพรวมแคมเปญ</h2><div id="dash-daysleft" class="chip hidden"></div></div>
+        <div id="dash-alerts"></div>
+        <div class="stat-grid" id="dash-stats"></div>
+        <div class="grid-2">
+          <div class="card">
+            <b>ความครอบคลุม</b>
+            <div style="margin:12px 0"><div class="progress-bar"><div class="progress-fill" id="dash-cov-bar" style="width:0%"></div></div>
+              <div class="stat-sub" style="margin-top:6px"><span id="dash-cov-text">0%</span></div></div>
+            <div id="dash-timeline" style="display:flex;gap:3px;align-items:flex-end;height:70px;margin-top:10px"></div>
+          </div>
+          <div class="card"><b>ความคืบหน้าตามหน่วยงาน (ค้างมากสุดก่อน)</b>
+            <div class="table-wrap" style="margin-top:10px;max-height:260px;overflow-y:auto">
+              <table class="data-table"><thead><tr><th>หน่วยงาน</th><th>เป้าหมาย</th><th>ครบแล้ว</th><th></th></tr></thead><tbody id="dash-dept-body"></tbody></table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- STAFF -->
+      <section class="page-section" id="section-staff">
+        <div class="section-header"><h2>ทะเบียนบุคลากร</h2><button class="btn btn-primary" id="btn-new-staff"><span class="material-icons-outlined">person_add</span> ลงทะเบียนใหม่</button></div>
+        <div class="card">
+          <div class="form-grid" style="margin-bottom:0">
+            <div class="form-field"><label>ค้นหา (ชื่อ/เลขบัตร/HN/เบอร์)</label><input id="staff-q" placeholder="พิมพ์เพื่อค้นหา..."></div>
+            <div class="form-field"><label>หน่วยงาน</label><select id="staff-dept-filter"><option value="">ทั้งหมด</option></select></div>
+            <div class="form-field"><label>สถานะบุคลากร</label><select id="staff-status-filter"><option value="">ทั้งหมด</option><option value="active">ปฏิบัติงาน</option><option value="resigned">ลาออก</option><option value="transferred">ย้ายหน่วยงาน</option><option value="leave">ลาศึกษาต่อ/พักงาน</option></select></div>
+            <div class="form-field"><label>สถานะในแคมเปญ (ตามที่เลือกด้านบน)</label><select id="staff-state-filter"><option value="">ทั้งหมด</option><option value="complete">ครบแล้ว</option><option value="in_progress">อยู่ระหว่างฉีด</option><option value="not_started">ยังไม่เริ่ม</option><option value="declined">ไม่ประสงค์รับ</option><option value="not_enrolled">ยังไม่ลงทะเบียน</option></select></div>
+          </div>
+          <div class="table-wrap"><table class="data-table"><thead><tr><th>ชื่อ-สกุล</th><th>หน่วยงาน</th><th>อายุ</th><th>เลขบัตร</th><th>สถานะแคมเปญ</th><th>สถานะบุคลากร</th></tr></thead><tbody id="staff-body"></tbody></table></div>
+          <div class="stat-sub" style="margin-top:8px" id="staff-count"></div>
+        </div>
+      </section>
+
+      <!-- RECORD DOSE -->
+      <section class="page-section" id="section-record">
+        <div class="section-header"><h2>บันทึกการฉีดวัคซีน</h2>
+          <div class="tabs" style="margin:0"><button class="tab-btn active" data-tab="rec-single">รายคน</button><button class="tab-btn" data-tab="rec-session">รอบฉีด (หลายคน)</button><button class="tab-btn" data-tab="rec-log">ประวัติรอบฉีด</button></div>
+        </div>
+        <div class="tabpane active" id="tab-rec-single">
+          <div class="card">
+            <div class="form-grid">
+              <div class="form-field full"><label>ค้นหาบุคลากร <span class="req">*</span></label><input id="rec-search" placeholder="พิมพ์ชื่อ/HN เพื่อค้นหา"><div id="rec-search-results" class="card-sub"></div></div>
+            </div>
+            <div id="rec-selected" class="hidden">
+              <div class="alert-box info" id="rec-staff-box"></div>
+              <div class="form-grid">
+                <div class="form-field"><label>วัคซีน/แคมเปญ</label><select id="rec-campaign"></select></div>
+                <div class="form-field"><label>เข็มที่</label><input id="rec-doseno" type="number" min="1" readonly></div>
+                <div class="form-field"><label>วันที่ฉีด</label><input id="rec-date" type="date"></div>
+                <div class="form-field"><label>Lot ที่ใช้ <span class="req">*</span></label><select id="rec-lot"></select></div>
+                <div class="form-field"><label>ตำแหน่งที่ฉีด</label><select id="rec-site"><option>แขนซ้าย</option><option>แขนขวา</option><option>อื่น ๆ</option></select></div>
+                <div class="form-field"><label>ผู้ฉีด</label><input id="rec-vaccinator"></div>
+              </div>
+              <div class="form-field full"><label>คัดกรองก่อนฉีด</label><div id="rec-screening"></div>
+                <label class="choice-pill" style="margin-top:6px"><input type="checkbox" id="rec-screen-confirm"><span>ยืนยันว่าได้คัดกรองแล้ว ไม่พบข้อห้าม</span></label>
+              </div>
+              <div id="rec-checks"></div>
+              <div class="form-field full hidden" id="rec-override-wrap"><label>เหตุผลที่ต้องยกเว้น (บันทึกลง audit log)</label><input id="rec-override"></div>
+              <div class="form-actions"><button class="btn btn-primary" id="btn-rec-save"><span class="material-icons-outlined">check_circle</span> บันทึกการฉีด</button><button class="btn btn-outline" id="btn-rec-cancel">ยกเลิก</button></div>
+            </div>
+          </div>
+        </div>
+        <div class="tabpane" id="tab-rec-session">
+          <div class="card">
+            <div class="form-grid">
+              <div class="form-field"><label>วัคซีน/แคมเปญ</label><select id="ses-campaign"></select></div>
+              <div class="form-field"><label>วันที่ฉีด (รอบนี้)</label><input id="ses-date" type="date"></div>
+              <div class="form-field"><label>Lot ที่ใช้ (ทั้งรอบ)</label><select id="ses-lot"></select></div>
+              <div class="form-field"><label>หน่วยงาน (กรองรายชื่อ)</label><select id="ses-dept"><option value="">ทั้งหมด</option></select></div>
+            </div>
+            <div class="stat-sub" style="margin-bottom:8px">เลือกรายชื่อที่ฉีดในรอบนี้ (แสดงเฉพาะผู้ที่ยังค้างรับของแคมเปญนี้)</div>
+            <div class="table-wrap" style="max-height:360px;overflow-y:auto"><table class="data-table"><thead><tr><th style="width:30px"><input type="checkbox" id="ses-checkall"></th><th>ชื่อ-สกุล</th><th>หน่วยงาน</th><th>เข็มที่</th><th>สถานะ</th></tr></thead><tbody id="ses-body"></tbody></table></div>
+            <div class="form-actions"><button class="btn btn-primary" id="btn-ses-save"><span class="material-icons-outlined">groups</span> บันทึกทั้งรอบ</button></div>
+            <div id="ses-result"></div>
+          </div>
+        </div>
+        <div class="tabpane" id="tab-rec-log">
+          <div class="card">
+            <div class="form-field" style="max-width:320px"><label>เลือกแคมเปญ</label><select id="log-campaign"></select></div>
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>วันที่</th><th>Lot</th><th>จำนวน</th><th>สะสม</th><th>คงเหลือจากจัดสรร</th></tr></thead><tbody id="log-body"></tbody></table></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FOLLOW-UP -->
+      <section class="page-section" id="section-followup">
+        <div class="section-header"><h2>ติดตาม/นัดหมาย</h2></div>
+        <div class="tabs"><button class="tab-btn active" data-tab="fu-due">รายชื่อค้างรับ</button><button class="tab-btn" data-tab="fu-his">รอตรวจสอบ HIS</button><button class="tab-btn" data-tab="fu-titer">ตรวจภูมิคุ้มกัน (Anti-HBs)</button><button class="tab-btn" data-tab="fu-plan">ผู้ช่วยวางแผนจัดสรร</button></div>
+        <div class="tabpane active" id="tab-fu-due">
+          <div class="card">
+            <div class="form-grid" style="margin-bottom:0">
+              <div class="form-field"><label>แคมเปญ</label><select id="due-campaign"></select></div>
+              <div class="form-field"><label>หน่วยงาน</label><select id="due-dept"><option value="">ทั้งหมด</option></select></div>
+            </div>
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>สถานะ</th><th>ชื่อ-สกุล</th><th>หน่วยงาน</th><th>เข็มที่</th><th>วันเร็วสุด</th><th>วันเป้าหมาย</th><th>เกินกำหนด</th><th>โทร</th></tr></thead><tbody id="due-body"></tbody></table></div>
+          </div>
+        </div>
+        <div class="tabpane" id="tab-fu-his">
+          <div class="card"><div class="table-wrap"><table class="data-table"><thead><tr><th>ชื่อ-สกุล</th><th>HN</th><th>วัคซีน</th><th>วันที่ฉีด</th><th>สถานะ HIS</th><th></th></tr></thead><tbody id="his-body"></tbody></table></div></div>
+        </div>
+        <div class="tabpane" id="tab-fu-titer">
+          <div class="alert-box info">ตรวจ anti-HBs หลังฉีดครบชุดแล้ว 1–2 เดือน หากต่ำกว่า 10 mIU/mL ควรพิจารณาฉีดชุดใหม่</div>
+          <div class="card"><div class="table-wrap"><table class="data-table"><thead><tr><th>ชื่อ-สกุล</th><th>หน่วยงาน</th><th>ฉีดครบเมื่อ</th><th>ช่วงตรวจแนะนำ</th><th>สถานะ</th><th></th></tr></thead><tbody id="titer-body"></tbody></table></div></div>
+        </div>
+        <div class="tabpane" id="tab-fu-plan">
+          <div class="form-field" style="max-width:320px"><label>แคมเปญ</label><select id="plan-campaign"></select></div>
+          <div id="plan-result"></div>
+        </div>
+      </section>
+
+      <!-- STOCK -->
+      <section class="page-section" id="section-stock">
+        <div class="section-header"><h2>คลังวัคซีน (Lot)</h2><button class="btn btn-primary" id="btn-new-lot"><span class="material-icons-outlined">add_box</span> รับ Lot ใหม่</button></div>
+        <div class="table-wrap"><table class="data-table"><thead><tr><th>วัคซีน</th><th>Lot</th><th>หมดอายุ</th><th>คงเหลือ</th><th>สถานะ</th><th></th></tr></thead><tbody id="lots-body"></tbody></table></div>
+      </section>
+
+      <!-- CAMPAIGNS -->
+      <section class="page-section" id="section-campaigns">
+        <div class="section-header"><h2>แคมเปญวัคซีน</h2><button class="btn btn-primary" id="btn-new-campaign"><span class="material-icons-outlined">add</span> สร้างแคมเปญ</button></div>
+        <div class="table-wrap"><table class="data-table"><thead><tr><th>ชื่อแคมเปญ</th><th>ปีงบ</th><th>ช่วงเวลา</th><th>จัดสรร</th><th>สถานะ</th><th></th></tr></thead><tbody id="camp-body"></tbody></table></div>
+      </section>
+
+      <!-- DATA QUALITY -->
+      <section class="page-section" id="section-quality">
+        <div class="section-header"><h2>คุณภาพข้อมูล</h2></div>
+        <div class="stat-grid" id="dq-stats"></div>
+        <div class="card"><div id="dq-detail"></div></div>
+      </section>
+
+      <!-- IMPORT -->
+      <section class="page-section" id="section-import">
+        <div class="section-header"><h2>นำเข้าข้อมูลจากไฟล์ Excel เดิม</h2></div>
+        <div class="alert-box info">รองรับไฟล์ชีตเดิม 4 รูปแบบ: MR (ปีงบ 2568), ไข้หวัดใหญ่ (ปีงบ 2569), HB (ปีงบ 2568), HB (ปีงบ 2569) — ระบบจะจับคู่บุคลากรด้วยเลขบัตร/ชื่อ และรวมกับข้อมูลเดิมอัตโนมัติ ไม่สร้างรายการซ้ำ</div>
+        <div class="card">
+          <div class="form-field" style="max-width:320px"><label>รูปแบบไฟล์ต้นทาง</label>
+            <select id="imp-kind"><option value="mr68">MR บุคลากร ปีงบ 2568</option><option value="flu69">ไข้หวัดใหญ่ บุคลากร ปีงบ 2569</option><option value="hb68">HB บุคลากร ปีงบ 2568</option><option value="hb69">HB บุคลากร ปีงบ 2569</option></select>
+          </div>
+          <div class="dropzone" id="imp-drop"><span class="material-icons-outlined" style="font-size:32px">upload_file</span><div>ลากไฟล์ .xlsx มาวาง หรือคลิกเพื่อเลือกไฟล์</div><input type="file" id="imp-file" accept=".xlsx,.xls" class="hidden"></div>
+          <div id="imp-summary"></div>
+          <div id="imp-issues" style="max-height:320px;overflow-y:auto;margin-top:10px"></div>
+          <div class="form-actions hidden" id="imp-actions"><button class="btn btn-primary" id="btn-imp-commit"><span class="material-icons-outlined">save</span> ยืนยันนำเข้าจริง</button></div>
+        </div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section class="page-section" id="section-settings">
+        <div class="section-header"><h2>ตั้งค่าระบบ</h2></div>
+        <div class="tabs"><button class="tab-btn active" data-tab="set-theme">ทั่วไป/ธีม</button><button class="tab-btn" data-tab="set-dept">หน่วยงาน</button><button class="tab-btn" data-tab="set-vaccine">วัคซีน</button><button class="tab-btn" data-tab="set-users">ผู้ใช้งาน</button><button class="tab-btn" data-tab="set-audit">Audit Log</button></div>
+        <div class="tabpane active" id="tab-set-theme">
+          <div class="card">
+            <div class="form-grid">
+              <div class="form-field"><label>ชื่อระบบ</label><input id="set-sysname"></div>
+              <div class="form-field"><label>ชื่อหน่วยงาน</label><input id="set-orgname"></div>
+              <div class="form-field full"><label>ข้อความต้อนรับ</label><input id="set-welcome"></div>
+            </div>
+            <div class="grid-3">
+              <div class="color-row"><input type="color" id="set-color-primary"><label>สีหลัก</label></div>
+              <div class="color-row"><input type="color" id="set-color-secondary"><label>สีรอง</label></div>
+              <div class="color-row"><input type="color" id="set-color-sidebar"><label>สีเมนูข้าง</label></div>
+            </div>
+            <div class="form-field"><label class="choice-pill"><input type="checkbox" id="set-selfreg"><span>เปิดให้บุคลากรลงทะเบียนด้วยตนเอง</span></label></div>
+            <div class="form-field"><label>รหัสลงทะเบียน (เว้นว่าง = ไม่ต้องใช้รหัส)</label><input id="set-selfcode"></div>
+            <div class="form-actions"><button class="btn btn-primary" id="btn-save-settings">บันทึกการตั้งค่า</button></div>
+          </div>
+        </div>
+        <div class="tabpane" id="tab-set-dept">
+          <div class="card">
+            <div class="form-grid"><div class="form-field full"><label>เพิ่มหน่วยงาน</label><div style="display:flex;gap:8px"><input id="new-dept-name" placeholder="ชื่อหน่วยงาน" style="flex:1"><button class="btn btn-secondary" id="btn-add-dept">เพิ่ม</button></div></div></div>
+            <div id="dept-list"></div>
+          </div>
+        </div>
+        <div class="tabpane" id="tab-set-vaccine">
+          <div class="card"><div id="vaccine-list"></div></div>
+        </div>
+        <div class="tabpane" id="tab-set-users">
+          <div class="card">
+            <button class="btn btn-secondary" id="btn-new-user" style="margin-bottom:12px"><span class="material-icons-outlined">person_add</span> เพิ่มผู้ใช้</button>
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>ชื่อผู้ใช้</th><th>สิทธิ์</th><th>สถานะ</th><th></th></tr></thead><tbody id="users-body"></tbody></table></div>
+          </div>
+        </div>
+        <div class="tabpane" id="tab-set-audit">
+          <div class="card"><div class="table-wrap"><table class="data-table"><thead><tr><th>เวลา</th><th>ผู้ใช้</th><th>การกระทำ</th><th>รายละเอียด</th></tr></thead><tbody id="audit-body"></tbody></table></div></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<div id="modal-root"></div>
+<div id="loadingOverlay" class="loading-overlay" role="status" aria-live="polite" aria-busy="true">
+  <div class="ld-bg"><i class="ld-blob b1"></i><i class="ld-blob b2"></i></div>
+  <div class="loading-box">
+    <div class="ld-stage">
+      <span class="ld-pulse p1"></span><span class="ld-pulse p2"></span>
+      <svg class="ld-ring r2" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="56" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="2 9" style="stroke:var(--primary)"/></svg>
+      <svg class="ld-ring r1" viewBox="0 0 120 120" aria-hidden="true"><defs><linearGradient id="ldg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--primary)"/><stop offset="1" style="stop-color:var(--secondary)"/></linearGradient></defs><circle cx="60" cy="60" r="56" fill="none" stroke="url(#ldg)" stroke-width="4" stroke-linecap="round" stroke-dasharray="130 222"/></svg>
+      <span class="ld-orbit o1"><i></i></span><span class="ld-orbit o2"><i></i></span><span class="ld-orbit o3"><i></i></span>
+      <div class="ld-core"><img src="data:image/webp;base64,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" class="loading-icon" alt=""></div>
+      <span class="ld-plus a">+</span><span class="ld-plus b">+</span><span class="ld-plus c">+</span>
+    </div>
+    <div class="loading-text"><span id="ld-text-main">กำลังโหลดข้อมูล</span><span class="ld-dots"><i></i><i></i><i></i></span></div>
+    <div class="ld-sub">กรุณารอสักครู่</div>
+    <div class="ld-bar"><span></span></div>
+  </div>
+</div>
+<div id="toast-container"></div>
+<script>
+/* ============================================================
+   1) RPC PROXY — จำลอง google.script.run ด้วย fetch → doPost (Apps Script)
+   ============================================================ */
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzDB_dzO6ATGRSxnpc4riLO0wJUDJO_Ui4tr3gMytOGPe1wcdsHcuEFYWyAAW0cz7D7JQ/exec";
+const BOOT = {};   // โฮสต์บน Vercel (static) — ไม่มี template ฝั่งเซิร์ฟเวอร์
+let AUTH_TOKEN = "";
+const gs = {
+  get run() {
+    let ok = null, fail = null, quiet = false;
+    const native = typeof google !== "undefined" && google.script && google.script.run;   // หน้าเว็บเสิร์ฟจาก Apps Script → ใช้ google.script.run (พกตัวตนบัญชี Google)
+    const runner = new Proxy({}, {
+      get(_, prop) {
+        if (prop === "withSuccessHandler") return cb => { ok = cb; return runner; };
+        if (prop === "withFailureHandler") return cb => { fail = cb; return runner; };
+        if (prop === "silent") return () => { quiet = true; return runner; };   // เรียกแบบไม่ขึ้น overlay (เช่น ค้นหาขณะพิมพ์)
+        return (...args) => {
+          const t = rpcBegin(prop, quiet), onOk = ok, onFail = fail;   // ทุกการเรียกเซิร์ฟเวอร์ = แสดง loading อัตโนมัติ
+          const handle = d => {
+            rpcEnd(t);
+            if (d && d.error) { if (/เซสชันหมดอายุ/.test(d.error) && AUTH_TOKEN) resetToLogin("เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่"); else if (onFail) onFail(new Error(d.error)); }
+            else if (onOk) onOk(d && d.result);
+          };
+          const failed = e => { rpcEnd(t); if (onFail) onFail(e); };
+          if (native) { google.script.run.withSuccessHandler(handle).withFailureHandler(failed).apiCall(prop, args, AUTH_TOKEN); return; }
+          fetch(WEB_APP_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ func: prop, args, token: AUTH_TOKEN }) })
+            .then(r => r.json()).then(handle).catch(failed);
+        };
+      }
+    });
+    return runner;
+  }
+};
+
+/* ============================================================ 2) STATE + HELPERS */
+const $ = id => document.getElementById(id);
+const STATE = { user: null, settings: null, campaigns: [], depts: [], vaccines: [], campaignId: "", staffCache: [], recStaff: null, lotsCache: [], issuesCache: [], bundleReady: false };
+function escapeHtml(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+function errMsg(e) { return (e && e.message) || String(e); }
+function fmtDate(iso) { if (!iso) return "-"; const p = iso.split("-"); return p.length === 3 ? (+p[2]) + "/" + (+p[1]) + "/" + (+p[0] + 543) : iso; }
+function fmtDateShort(iso) { return fmtDate(iso); }
+
+/* ---------- ระบบ Loading กลาง ----------
+   • ทุกการเรียกเซิร์ฟเวอร์ (gs.run) แสดง overlay อัตโนมัติ (หน่วง 140ms กันกะพริบ, แสดงอย่างน้อย 600ms กันวูบ)
+   • ทุกปุ่มที่กด: ปุ่มขึ้นวงหมุนทันที (≥450ms) — ลิงก์/เมนูเปลี่ยนหน้าขึ้น overlay สั้น ๆ
+   • ปรับค่าได้ที่ LOAD_CFG (overlayForLocalClicks=true → ปุ่มที่ไม่เรียกเซิร์ฟเวอร์ก็ขึ้น overlay เต็มจอด้วย) */
+const LOAD_CFG = { grace: 140, minShow: 600, hideDelay: 180, localMin: 450, navMs: 650, watchdog: 45000, overlayForLocalClicks: false };
+const RPC_TEXT = {
+  login: "กำลังเข้าสู่ระบบ", loginGoogle: "กำลังเข้าสู่ระบบด้วย Google", staffLogin: "กำลังเข้าสู่ระบบ", staffRegister: "กำลังตรวจสอบและสร้างบัญชี",
+  myHistory: "กำลังโหลดประวัติวัคซีน", searchMyRecord: "กำลังค้นหาและเชื่อมประวัติ", lookupHistory: "กำลังค้นหาประวัติวัคซีน", selfRegister: "กำลังส่งข้อมูลลงทะเบียน",
+  getDashboard: "กำลังสรุปภาพรวม", listStaff: "กำลังโหลดทะเบียนบุคลากร", getProfile: "กำลังเปิดข้อมูลบุคลากร", recordDose: "กำลังบันทึกการฉีดวัคซีน",
+  recordSession: "กำลังบันทึกการฉีดวัคซีน", checkDose: "กำลังตรวจสอบเงื่อนไขการฉีด", importPreview: "กำลังตรวจสอบไฟล์", importCommit: "กำลังนำเข้าข้อมูล",
+  changeStaffPassword: "กำลังเปลี่ยนรหัสผ่าน", changeMyPin: "กำลังเปลี่ยน PIN", getAudit: "กำลังโหลดบันทึกการใช้งาน"
+};
+function rpcText(n) {
+  if (RPC_TEXT[n]) return RPC_TEXT[n];
+  if (/^(save|record|add|void|merge|set|mark|clone|change|import)/.test(n)) return "กำลังบันทึกข้อมูล";
+  if (/^(list|get|load)/.test(n)) return "กำลังโหลดข้อมูล";
+  return "กำลังประมวลผล";
+}
+let pending = 0, pendingAll = 0, manualText = null, lastRpcText = "กำลังโหลดข้อมูล", flashActive = false, flashT = null;
+let ovShown = false, ovShownAt = 0, ovShowT = null, ovHideT = null, ovWatchT = null;
+const ovWanted = () => pending > 0 || manualText !== null;
+const ovClean = t => String(t || "").replace(/[.\u2026\s]+$/, "") || "กำลังโหลดข้อมูล";
+function ovShow(o) {
+  if (ovShown) return;
+  o.classList.add("show"); ovShown = true; ovShownAt = Date.now();
+  clearTimeout(ovWatchT); ovWatchT = setTimeout(() => { pending = 0; pendingAll = 0; manualText = null; flashActive = false; ovSync(); }, LOAD_CFG.watchdog);   // กันค้างกรณีเครือข่ายมีปัญหา
+}
+function ovSync(immediate) {
+  const o = $("loadingOverlay"); if (!o) return;
+  $("app-progress").classList.toggle("active", pendingAll > 0);
+  if (ovWanted()) {
+    clearTimeout(ovHideT); ovHideT = null;
+    const t = $("ld-text-main"); if (t) t.textContent = ovClean(manualText !== null ? manualText : lastRpcText);
+    if (ovShown) return;
+    if (immediate) { clearTimeout(ovShowT); ovShowT = null; ovShow(o); }
+    else if (!ovShowT) ovShowT = setTimeout(() => { ovShowT = null; if (ovWanted()) ovShow(o); }, LOAD_CFG.grace);
+  } else {
+    clearTimeout(ovShowT); ovShowT = null;
+    if (!ovShown || ovHideT) return;
+    const wait = Math.max(LOAD_CFG.hideDelay, LOAD_CFG.minShow - (Date.now() - ovShownAt));
+    ovHideT = setTimeout(() => { ovHideT = null; if (ovWanted()) return; o.classList.remove("show"); ovShown = false; clearTimeout(ovWatchT); }, wait);
+  }
+}
+function showLoading(text) { flashActive = false; manualText = text || "กำลังโหลดข้อมูล..."; ovSync(true); }
+function hideLoading() { flashActive = false; manualText = null; ovSync(); }
+function flashOverlay(text, ms) { showLoading(text); flashActive = true; clearTimeout(flashT); flashT = setTimeout(() => { if (flashActive) hideLoading(); }, ms || LOAD_CFG.navMs); }
+function rpcBegin(name, quiet) { const t = { quiet: !!quiet, done: false }; pendingAll++; if (!quiet) { pending++; lastRpcText = rpcText(name); } ovSync(); return t; }
+function rpcEnd(t) {
+  if (t.done) return; t.done = true; pendingAll = Math.max(0, pendingAll - 1);
+  if (!t.quiet) { pending = Math.max(0, pending - 1); if (!pending && !flashActive) manualText = null; }
+  ovSync();
+}
+/* beginBusy/endBusy/busy เดิมยังเรียกใช้ได้ แต่การนับทำที่ gs.run อัตโนมัติแล้ว จึงเป็น no-op เพื่อไม่ให้นับซ้ำ */
+const beginBusy = () => {};
+const endBusy = () => {};
+const busy = fn => fn;
+
+function showToast(msg, type) {
+  const el = document.createElement("div"); el.className = "toast " + (type || "");
+  el.innerHTML = '<span class="material-icons-outlined">' + (type === "success" ? "check_circle" : type === "error" ? "error" : type === "warning" ? "warning" : "info") + '</span><span>' + escapeHtml(msg) + '</span>';
+  $("toast-container").appendChild(el);
+  setTimeout(() => { el.style.opacity = "0"; el.style.transition = "opacity .3s"; setTimeout(() => el.remove(), 300); }, 3600);
+}
+function btnBusy(b, ms) {
+  b._minUntil = Math.max(b._minUntil || 0, Date.now() + ms); b.classList.add("btn-busy"); clearTimeout(b._bt);
+  b._bt = setTimeout(() => { if (!b._hold) b.classList.remove("btn-busy"); }, ms);
+}
+function setBtnLoading(btn, on, label) {
+  if (!btn) return;
+  if (on) { btn._hold = true; btn.disabled = true; btnBusy(btn, LOAD_CFG.localMin); return; }
+  btn._hold = false; btn.disabled = false;
+  const rest = (btn._minUntil || 0) - Date.now(); clearTimeout(btn._bt);
+  if (rest > 0) btn._bt = setTimeout(() => { if (!btn._hold) btn.classList.remove("btn-busy"); }, rest); else btn.classList.remove("btn-busy");
+}
+
+/* Modal helper: openModal(html, {wide}) → คืน element เพื่อ query ต่อ, closeModal() */
+function openModal(html, opts) {
+  opts = opts || {};
+  const wrap = document.createElement("div"); wrap.className = "modal-overlay"; wrap.id = "active-modal";
+  wrap.innerHTML = '<div class="modal-box' + (opts.wide ? " wide" : "") + '" style="position:relative"><span class="modal-close material-icons-outlined" id="modal-close-btn">close</span>' + html + '</div>';
+  $("modal-root").appendChild(wrap);
+  wrap.addEventListener("click", e => { if (e.target === wrap) closeModal(); });
+  wrap.querySelector("#modal-close-btn").onclick = closeModal;
+  return wrap;
+}
+function closeModal() { const m = $("active-modal"); if (m) m.remove(); }
+
+function fullName(s) { return (s.prefix || "") + (s.firstName || s.name || "") + " " + (s.lastName || ""); }
+function stateLabel(k) {
+  return ({ complete: "ครบแล้ว", in_progress: "อยู่ระหว่างฉีด", not_started: "ยังไม่เริ่ม", declined: "ไม่ประสงค์รับ", exempt: "ยกเว้น", not_enrolled: "ยังไม่ลงทะเบียน", cohort_gap: "ปีเกิดนอกกลุ่มเป้าหมาย", unknown_cohort: "ไม่ทราบปีเกิด" }[k] || k);
+}
+function stateBadgeClass(k) { return ({ complete: "badge-complete", in_progress: "badge-warning", not_started: "badge-incomplete", declined: "badge-neutral", exempt: "badge-neutral", not_enrolled: "badge-neutral", cohort_gap: "badge-neutral", unknown_cohort: "badge-neutral" }[k] || "badge-neutral"); }
+function stateBadge(k) { return '<span class="badge ' + stateBadgeClass(k) + '">' + stateLabel(k) + '</span>'; }
+function deptName(id) { const d = STATE.depts.find(x => x.id === id); return d ? d.name : "(ไม่ระบุ)"; }
+function campById(id) { return STATE.campaigns.find(c => c.id === id); }
+function initials(s) { return ((s.firstName || "")[0] || "?") + ((s.lastName || "")[0] || ""); }
+</script>
+<script>
+/* ============================================================ 3) THEME + AUTH */
+function hexToRgb(hex) { const m = /^#([0-9a-f]{6})$/i.exec(hex || ""); if (!m) return null; const n = parseInt(m[1], 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255].join(", "); }
+function applyTheme(s) {
+  const r = document.documentElement.style;
+  if (s.COLOR_PRIMARY) { r.setProperty("--primary", s.COLOR_PRIMARY); const rgb = hexToRgb(s.COLOR_PRIMARY); if (rgb) r.setProperty("--primary-rgb", rgb); }
+  if (s.COLOR_SECONDARY) r.setProperty("--secondary", s.COLOR_SECONDARY);
+  if (s.COLOR_SIDEBAR_BG) r.setProperty("--sidebar-background", s.COLOR_SIDEBAR_BG);
+  if (s.COLOR_DANGER) r.setProperty("--danger", s.COLOR_DANGER);
+  if (s.SYS_NAME) { document.title = s.SYS_NAME; $("landing-sys-name").textContent = s.SYS_NAME; $("sidebar-sys-name").textContent = s.SYS_NAME; }
+  if (s.WELCOME_MSG) $("landing-welcome").textContent = s.WELCOME_MSG;
+  if (s.FOOTER_MSG) $("sidebar-footer-msg").textContent = s.FOOTER_MSG;
+}
+
+function afterLogin(r) {
+  AUTH_TOKEN = r.token; STATE.user = r.user;
+  try { sessionStorage.setItem("vr_token", r.token); sessionStorage.setItem("vr_user", JSON.stringify(r.user)); } catch (_) {}
+  if (r.mustChangePin) STATE.mustPin = true;
+  if (r.user && r.user.role === "staff") { resetToLogin("บัญชีนี้ไม่มีสิทธิ์เข้าใช้งานส่วนเจ้าหน้าที่"); return; }
+  enterApp();
+}
+function doGoogleLogin() {
+  if (BOOT && BOOT.googleAuthUrl) { showLoading("กำลังไปยัง Google..."); window.open(BOOT.googleAuthUrl, "_top"); return; }   // ล็อกอินด้วยบัญชี Google ทั่วไป
+  if (BOOT && BOOT.googleAuthNote) { $("login-error").textContent = BOOT.googleAuthNote + " — ลองรีเฟรชหน้าแล้วกดใหม่"; return; }
+  const btn = $("btn-google-login"); setBtnLoading(btn, true); $("login-error").textContent = ""; showLoading("กำลังเข้าสู่ระบบ...");
+  gs.run.withSuccessHandler(r => { setBtnLoading(btn, false); showLoading("กำลังโหลดข้อมูล..."); afterLogin(r); })
+    .withFailureHandler(e => { setBtnLoading(btn, false); hideLoading(); $("login-error").textContent = errMsg(e); }).loginGoogle();
+}
+function doLogin() {
+  const name = $("login-name").value.trim(), pin = $("login-pin").value;
+  if (!name || !pin) { $("login-error").textContent = "กรุณากรอกชื่อผู้ใช้และ PIN"; return; }
+  setBtnLoading($("btn-login"), true); $("login-error").textContent = ""; showLoading("กำลังเข้าสู่ระบบ...");
+  gs.run.withSuccessHandler(r => { setBtnLoading($("btn-login"), false); showLoading("กำลังโหลดข้อมูล..."); afterLogin(r); })
+    .withFailureHandler(e => { setBtnLoading($("btn-login"), false); hideLoading(); $("login-error").textContent = errMsg(e); }).login(name, pin);
+}
+/* ออกจากระบบ: รีเซ็ตสถานะในหน้าเดิมแล้วกลับหน้าเข้าสู่ระบบ — ห้ามใช้ location.reload() เพราะหน้าเว็บรันใน iframe ของ Apps Script จะกลายเป็นหน้าขาว */
+function resetToLogin(msg) {
+  AUTH_TOKEN = ""; STATE.user = null; STATE.mustPin = false; STATE.campaignId = ""; STATE.staffCache = []; STATE.recStaff = null; STATE.lotsCache = []; STATE.issuesCache = []; STATE.bundleReady = false;
+  try { sessionStorage.removeItem("vr_token"); sessionStorage.removeItem("vr_user"); } catch (_) {}
+  pending = 0; pendingAll = 0; flashActive = false; $("app-progress").classList.remove("active"); hideLoading();
+  try { closeModal(); } catch (_) {} try { closeSidebar(); } catch (_) {}
+  $("toast-container").innerHTML = "";
+  document.querySelectorAll("#page-app tbody").forEach(t => { t.innerHTML = ""; });   // ล้างข้อมูลที่ค้างบนจอ ไม่ให้ผู้ใช้คนถัดไปเห็น
+  document.querySelectorAll(".page-section").forEach(s => s.classList.remove("active"));
+  ["page-app", "page-staff", "page-self"].forEach(id => $(id).classList.add("hidden")); $("page-landing").classList.remove("hidden");
+  ["sv-f-input", "login-name", "login-pin"].forEach(id => { const el = $(id); if (el) el.value = ""; });
+  ["btn-login", "btn-google-login"].forEach(id => { const el = $(id); if (el) setBtnLoading(el, false); });
+  ["sv-f-error"].forEach(id => { $(id).textContent = ""; });
+  svFindSetMode("cid", true); $("sv-find-result").innerHTML = "";
+  $("login-error").textContent = msg || ""; window.scrollTo(0, 0);
+}
+function doLogout() { resetToLogin(""); }
+
+function enterApp() {
+  $("page-landing").classList.add("hidden"); $("page-self").classList.add("hidden"); $("page-app").classList.remove("hidden");
+  $("sidebar-user").textContent = STATE.user.name + " (" + ({ admin: "ผู้ดูแลระบบ", vaccinator: "ผู้ให้บริการวัคซีน", viewer: "ผู้ดูข้อมูล" }[STATE.user.role] || STATE.user.role) + ")";
+  if (STATE.user.role === "viewer") document.querySelectorAll('[data-page="import"],[data-page="settings"]').forEach(e => e.classList.add("hidden"));
+  bootstrapApp();
+}
+
+/* ---------- หน้าลงทะเบียนด้วยตนเอง ---------- */
+function renderSelfFields(pub) {
+  const fields = pub.FORM_FIELDS.filter(f => f.show);
+  $("self-fields").innerHTML = fields.map(f => {
+    if (f.key === "deptId") return '<div class="form-field full"><label>' + f.label + (f.required ? ' <span class="req">*</span>' : '') + '</label><select id="self-' + f.key + '"><option value="">-- เลือก --</option>' + STATE.depts.map(d => '<option value="' + d.id + '">' + escapeHtml(d.name) + '</option>').join('') + '</select></div>';
+    if (f.key === "birthDate") return '<div class="form-field"><label>' + f.label + (f.required ? ' <span class="req">*</span>' : '') + '</label><input type="date" id="self-' + f.key + '"></div>';
+    if (f.key === "sex") return '<div class="form-field"><label>เพศ</label><select id="self-sex"><option value="">ไม่ระบุ</option><option>ชาย</option><option>หญิง</option></select></div>';
+    return '<div class="form-field' + (f.key === "note" ? " full" : "") + '"><label>' + f.label + (f.required ? ' <span class="req">*</span>' : '') + '</label><input id="self-' + f.key + '"></div>';
+  }).join("");
+  const open = STATE.campaigns.filter(c => c.status === "open");
+  $("self-campaign-wrap").classList.toggle("hidden", !open.length);
+  $("self-intent-wrap").classList.toggle("hidden", !open.length);
+  $("self-campaign").innerHTML = open.map(c => '<option value="' + c.id + '">' + escapeHtml(c.name) + '</option>').join("");
+  $("self-code-wrap").classList.toggle("hidden", pub.SELF_REG_NEEDS_CODE !== "yes");
+}
+function showSelfPage() {
+  $("page-landing").classList.add("hidden"); $("page-self").classList.remove("hidden");
+  beginBusy();
+  gs.run.withSuccessHandler(busy(pub => {
+    STATE.settingsPublic = pub; STATE.depts = []; STATE.campaigns = [];
+    beginBusy();
+    gs.run.withSuccessHandler(busy(ds => { STATE.depts = ds; if (STATE.campaigns.length || true) renderIfReady(); })).withFailureHandler(busy(() => {})).listDepartments();
+    beginBusy();
+    gs.run.withSuccessHandler(busy(cs => { STATE.campaigns = cs; renderIfReady(); })).withFailureHandler(busy(() => {})).listCampaigns();
+    function renderIfReady() { if (STATE.depts && STATE.campaigns) renderSelfFields(pub); }
+  })).withFailureHandler(busy(e => showToast(errMsg(e), "error"))).getPublicSettings();
+}
+function submitSelf(ev) {
+  ev.preventDefault();
+  const pub = STATE.settingsPublic, form = {};
+  pub.FORM_FIELDS.filter(f => f.show).forEach(f => { const el = $("self-" + f.key); if (el) form[f.key] = el.value; });
+  const open = STATE.campaigns.filter(c => c.status === "open");
+  if (open.length) form.campaignId = $("self-campaign").value;
+  const intentEl = document.querySelector('input[name="self-intent"]:checked'); if (intentEl) form.intent = intentEl.value;
+  const code = $("self-code").value;
+  setBtnLoading($("btn-self-submit"), true);
+  gs.run.withSuccessHandler(r => { setBtnLoading($("btn-self-submit"), false); $("self-msg").className = "alert-box success"; $("self-msg").textContent = r.existing ? "อัปเดตข้อมูลของท่านเรียบร้อยแล้ว" : "ลงทะเบียนสำเร็จ เจ้าหน้าที่จะตรวจสอบข้อมูลอีกครั้ง"; document.getElementById("self-form").reset(); })
+    .withFailureHandler(e => { setBtnLoading($("btn-self-submit"), false); $("self-msg").className = "alert-box danger"; $("self-msg").textContent = errMsg(e); }).selfRegister(form, code);
+}
+</script>
+<script>
+/* ============================================================ 3.5) พอร์ทัลบุคลากร (ค้นหาประวัติวัคซีน ไม่ต้องล็อกอิน) */
+const SV_STATE_TH = { complete: "ครบตามกำหนดแล้ว", in_progress: "อยู่ระหว่างรับวัคซีน", not_started: "ยังไม่เริ่ม", declined: "แจ้งไม่ประสงค์รับ", exempt: "ได้รับการยกเว้น", not_enrolled: "ยังไม่ได้ลงทะเบียน", unknown_cohort: "รอตรวจสอบกลุ่มเป้าหมาย", cohort_gap: "ไม่อยู่ในกลุ่มเป้าหมาย" };
+function svOpen() {
+  $("page-landing").classList.add("hidden"); $("page-self").classList.add("hidden"); $("page-staff").classList.remove("hidden"); svFindSetMode("cid", true);
+}
+function svTbl(head, rows) {
+  return rows.length ? '<div class="table-wrap"><table class="data-table"><thead><tr>' + head.map(x => "<th>" + x + "</th>").join("") + "</tr></thead><tbody>" +
+    rows.map(r => "<tr>" + r.map(c => "<td>" + escapeHtml(c) + "</td>").join("") + "</tr>").join("") + "</tbody></table></div>" : '<div style="color:var(--muted);font-size:13px">ยังไม่มีข้อมูล</div>';
+}
+function svSec(title, body) { return '<div class="pf-sec"><b>' + title + "</b>" + body + "</div>"; }
+function svSections(d) {   // ส่วนตารางประวัติ ใช้ร่วมกันทั้งหน้า "ประวัติของฉัน" และแท็บ "ค้นหาประวัติ"
+  let html = svSec("สถานะตามแคมเปญวัคซีน", svTbl(["แคมเปญ", "สถานะ", "ได้รับแล้ว", "เข็มถัดไป"], d.states.map(s => [
+    s.name, SV_STATE_TH[s.state] || s.state, (s.given + s.prior) + "/" + s.need,
+    s.next ? "เข็มที่ " + s.next + (s.earliest ? " (เริ่มได้ " + fmtDate(s.earliest) + ")" : "") + (s.target ? " เป้าหมาย " + fmtDate(s.target) : "") : "-"])));
+  html += svSec("ประวัติการรับวัคซีน", svTbl(["วันที่", "วัคซีน", "เข็มที่", "Lot", "แคมเปญ"], d.doses.map(x => [fmtDate(x.date), x.vaccineName, x.doseNo, x.lotNo || "-", x.campaignName || "-"])));
+  if (d.appointments.length) html += svSec("นัดหมายที่จะถึง", svTbl(["วันที่นัด", "เข็มที่", "แคมเปญ"], d.appointments.map(a => [fmtDate(a.plannedDate), a.doseNo, a.campaignName || "-"])));
+  if (d.titers.length) html += svSec("ผลตรวจภูมิคุ้มกัน", svTbl(["วันที่", "วัคซีน", "ค่า (mIU/mL)"], d.titers.map(t => [fmtDate(t.date), t.vaccineName, t.valueMIU])));
+  return html;
+}
+/* ---------- แท็บ "ค้นหาประวัติ" (ไม่ต้องล็อกอิน): เลขบัตรประชาชน / เบอร์โทร ---------- */
+let svFindMode = "cid";
+function svFindSetMode(m, noFocus) {
+  svFindMode = m; document.querySelectorAll("#sv-find-mode button").forEach(b => b.classList.toggle("active", b.dataset.mode === m));
+  const inp = $("sv-f-input"); inp.value = ""; $("sv-f-error").textContent = ""; $("sv-find-result").innerHTML = "";
+  if (m === "cid") { $("sv-f-label").textContent = "เลขบัตรประชาชน (13 หลัก)"; inp.placeholder = "x-xxxx-xxxxx-xx-x"; inp.maxLength = 17; inp.inputMode = "numeric"; }
+  else { $("sv-f-label").textContent = "เบอร์โทรศัพท์"; inp.placeholder = "0xx-xxx-xxxx"; inp.maxLength = 12; inp.inputMode = "tel"; }
+  if (!noFocus) inp.focus();
+}
+function svFmt(v, m) {
+  const d = v.replace(/\D/g, "");
+  if (m === "cid") { const parts = [1, 4, 5, 2, 1], out = []; let i = 0; parts.forEach(n => { if (d.length > i) out.push(d.substr(i, n)); i += n; }); return out.join("-"); }
+  const x = d.slice(0, 10); return x.length > 6 ? x.slice(0, 3) + "-" + x.slice(3, 6) + "-" + x.slice(6) : x.length > 3 ? x.slice(0, 3) + "-" + x.slice(3) : x;
+}
+function svFind() {
+  const dg = $("sv-f-input").value.replace(/\D/g, ""); $("sv-f-error").textContent = "";
+  if (svFindMode === "cid" && dg.length !== 13) { $("sv-f-error").textContent = "เลขบัตรประชาชนต้องมี 13 หลัก"; return; }
+  if (svFindMode === "phone" && (dg.length < 9 || dg.length > 10)) { $("sv-f-error").textContent = "เบอร์โทรต้องมี 9-10 หลัก"; return; }
+  const btn = $("btn-sv-find"); setBtnLoading(btn, true); $("sv-find-result").innerHTML = ""; showLoading("กำลังค้นหาประวัติวัคซีน...");
+  gs.run.withSuccessHandler(d => {
+    setBtnLoading(btn, false); hideLoading();
+    $("sv-find-result").innerHTML = '<div class="find-head"><div class="avatar"><span class="material-icons-outlined">person</span></div><div><div class="find-name">' + escapeHtml(d.name) + '</div><div class="find-dept">' + escapeHtml(d.dept + (d.position ? " · " + d.position : "")) + '</div></div><span class="badge badge-complete">พบข้อมูล</span></div>' +
+      svSections(d) + '<div class="card-sub" style="margin-top:8px">ชื่อแสดงแบบปกปิดบางส่วนเพื่อความเป็นส่วนตัว หากต้องการรายละเอียดเพิ่มเติม กรุณาติดต่อเจ้าหน้าที่ประจำหน่วยงาน</div>';
+    $("sv-find-result").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }).withFailureHandler(e => { setBtnLoading(btn, false); hideLoading(); $("sv-f-error").textContent = errMsg(e); })
+    .lookupHistory(svFindMode === "cid" ? { cid: dg } : { phone: dg });
+}
+$("btn-open-staff-portal").onclick = svOpen;
+$("link-sv-back").onclick = e => { e.preventDefault(); $("page-staff").classList.add("hidden"); $("page-landing").classList.remove("hidden"); };
+document.querySelectorAll("#sv-find-mode button").forEach(b => { b.onclick = () => svFindSetMode(b.dataset.mode); });
+$("sv-f-input").addEventListener("input", e => { const el = e.target; el.value = svFmt(el.value, svFindMode); });
+$("sv-f-input").addEventListener("keydown", e => { if (e.key === "Enter") svFind(); });
+$("btn-sv-find").onclick = svFind;
+</script>
+<script>
+/* ============================================================ 4) ROUTER + BOOTSTRAP */
+const TITLES = { dashboard: "ภาพรวม", staff: "ทะเบียนบุคลากร", record: "บันทึกการฉีดวัคซีน", followup: "ติดตาม/นัดหมาย", stock: "คลังวัคซีน (Lot)", campaigns: "แคมเปญวัคซีน", quality: "คุณภาพข้อมูล", import: "นำเข้าข้อมูลเดิม", settings: "ตั้งค่าระบบ" };
+function goToPage(key) {
+  document.querySelectorAll(".page-section").forEach(s => s.classList.remove("active"));
+  const sec = $("section-" + key); if (!sec) return; sec.classList.add("active");
+  sec.querySelectorAll(".card, .stat-card").forEach((el, i) => el.style.setProperty("--reveal-i", i));
+  document.querySelectorAll(".sidebar-nav-item").forEach(i => i.classList.toggle("active", i.dataset.page === key));
+  $("topbar-title").textContent = TITLES[key] || "";
+  closeSidebar();
+  const loaders = { dashboard: loadDashboard, staff: loadStaff, record: initRecordPage, followup: loadFollowup, stock: loadStock, campaigns: loadCampaigns, quality: loadQuality, import: null, settings: loadSettingsPage };
+  if (loaders[key]) loaders[key]();
+}
+function closeSidebar() { $("sidebar").classList.remove("open"); $("sidebar-backdrop").classList.remove("open"); }
+
+function bootstrapApp() {
+  beginBusy();
+  gs.run.withSuccessHandler(busy(pub => { STATE.settingsPublic = pub; applyTheme(pub); })).withFailureHandler(busy(() => {})).getPublicSettings();
+  beginBusy();
+  gs.run.withSuccessHandler(busy(ds => { STATE.depts = ds; fillDeptSelects(); })).withFailureHandler(busy(e => showToast(errMsg(e), "error"))).listDepartments();
+  beginBusy();
+  gs.run.withSuccessHandler(busy(vs => { STATE.vaccines = vs; })).withFailureHandler(busy(() => {})).listVaccines();
+  beginBusy();
+  gs.run.withSuccessHandler(busy(cs => {
+    STATE.campaigns = cs;
+    const open = cs.filter(c => c.status === "open");
+    STATE.campaignId = (open[0] || cs[cs.length - 1] || {}).id || "";
+    $("topbar-campaign").innerHTML = cs.map(c => '<option value="' + c.id + '">' + escapeHtml(c.name) + (c.status !== "open" ? " (ปิดแล้ว)" : "") + '</option>').join("");
+    $("topbar-campaign").value = STATE.campaignId;
+    goToPage("dashboard");
+  })).withFailureHandler(busy(e => showToast(errMsg(e), "error"))).listCampaigns();
+}
+function fillDeptSelects() {
+  const opts = STATE.depts.filter(d => d.active !== "no").map(d => '<option value="' + d.id + '">' + escapeHtml(d.name) + (d.staffCount != null ? ' (' + d.staffCount + ')' : '') + '</option>').join("");
+  ["staff-dept-filter", "ses-dept", "due-dept"].forEach(id => { const el = $(id); if (el) el.innerHTML = '<option value="">ทั้งหมด</option>' + opts; });
+}
+
+document.addEventListener("click", e => {
+  const nav = e.target.closest(".sidebar-nav-item"); if (nav && nav.dataset.page) { goToPage(nav.dataset.page); return; }
+  const tab = e.target.closest(".tab-btn"); if (tab) {
+    const group = tab.closest(".section-header, .page-section") || tab.parentElement.parentElement;
+    group.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active")); tab.classList.add("active");
+    const scope = tab.closest(".page-section") || document;
+    scope.querySelectorAll(".tabpane").forEach(p => p.classList.remove("active"));
+    const pane = document.getElementById("tab-" + tab.dataset.tab); if (pane) pane.classList.add("active");
+    if (tab.dataset.tab === "rec-log") loadSessionLog();
+    if (tab.dataset.tab === "fu-his") loadHis();
+    if (tab.dataset.tab === "fu-titer") loadTiterDue();
+    if (tab.dataset.tab === "fu-plan") loadPlan();
+    return;
+  }
+});
+$("btn-open-sidebar").onclick = () => { $("sidebar").classList.add("open"); $("sidebar-backdrop").classList.add("open"); };
+$("sidebar-backdrop").onclick = closeSidebar;
+$("btn-login").onclick = doLogin;
+$("btn-google-login").onclick = doGoogleLogin;
+if (!(typeof google !== "undefined" && google.script && google.script.run)) $("google-login-wrap").classList.add("hidden");   // ใช้ได้เฉพาะเมื่อเปิดผ่านลิงก์ Apps Script
+$("login-pin").addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
+$("link-self-register").onclick = e => { e.preventDefault(); showSelfPage(); };
+$("link-back-login").onclick = e => { e.preventDefault(); $("page-self").classList.add("hidden"); $("page-landing").classList.remove("hidden"); };
+$("link-logout").onclick = e => { e.preventDefault(); if (confirm("ออกจากระบบ?")) doLogout(); };
+$("self-form").addEventListener("submit", submitSelf);
+$("topbar-campaign").addEventListener("change", e => { STATE.campaignId = e.target.value; const active = document.querySelector(".page-section.active"); if (active) goToPage(active.id.replace("section-", "")); });
+
+(function boot() {
+  setInterval(() => { $("topbar-clock").textContent = new Date().toLocaleString("th-TH"); }, 1000);
+  if (location.hash === "#self") { gs.run.withSuccessHandler(showSelfPage).getPublicSettings(); return; }
+  let tok = "", user = null;
+  try { tok = sessionStorage.getItem("vr_token") || ""; user = JSON.parse(sessionStorage.getItem("vr_user") || "null"); } catch (_) {}
+  if (WEB_APP_URL.indexOf("PUT_") === 0) { showToast("ยังไม่ได้ตั้งค่า WEB_APP_URL — ดูคำแนะนำในไฟล์ Code.gs", "warning"); }
+  gs.run.withSuccessHandler(applyTheme).getPublicSettings();
+  if (BOOT && BOOT.login) { showLoading("กำลังโหลดข้อมูล..."); afterLogin(BOOT.login); return; }   // เพิ่งกลับมาจากหน้าล็อกอิน Google
+  if (BOOT && BOOT.error && !(tok && user)) $("login-error").textContent = BOOT.error;
+  if (tok && user) { AUTH_TOKEN = tok; STATE.user = user; if (user.role === "staff") resetToLogin(""); else enterApp(); }
+})();
+</script>
+<script>
+/* ============================================================ 5) DASHBOARD */
+function loadDashboard() {
+  $("dash-stats").innerHTML = '<div class="stat-card"><span class="skeleton" style="width:60%"></span><span class="skeleton" style="height:28px;width:40%"></span></div>'.repeat(4);
+  beginBusy();
+  gs.run.withSuccessHandler(busy(d => {
+    const k = d.kpi;
+    $("dash-daysleft").classList.toggle("hidden", d.daysLeft == null);
+    if (d.daysLeft != null) { $("dash-daysleft").textContent = d.daysLeft >= 0 ? "เหลือ " + d.daysLeft + " วัน (ถึง " + fmtDate(d.campaign.endDate) + ")" : "เลยกำหนดสิ้นสุด " + (-d.daysLeft) + " วัน"; $("dash-daysleft").style.color = d.daysLeft < 0 ? "var(--danger)" : ""; }
+    $("dash-alerts").innerHTML = (d.alerts || []).map(a => '<div class="alert-box ' + (a.level === "danger" ? "danger" : "warning") + '"><span class="material-icons-outlined">' + (a.level === "danger" ? "error" : "warning") + '</span><div>' + escapeHtml(a.text) + '</div></div>').join("");
+    const cards = [
+      ["เป้าหมาย (นับผู้ลงทะเบียน/มีประวัติ)", k.target, ""],
+      ["ครบตามกำหนดแล้ว", k.complete, "badge-complete"],
+      ["อยู่ระหว่างฉีด", k.in_progress || 0, "badge-warning"],
+      ["ยังไม่เริ่ม", k.not_started || 0, "badge-incomplete"]
+    ];
+    $("dash-stats").innerHTML = cards.map(c => '<div class="stat-card"><span class="stat-ico material-icons-outlined" style="' + ['','background:rgba(18,165,148,.14);color:#12A594','background:rgba(217,119,6,.14);color:#D97706','background:rgba(220,38,38,.12);color:#DC2626'][cards.indexOf(c)] + '">' + ['groups','verified','pending_actions','notification_important'][cards.indexOf(c)] + '</span><span class="stat-label">' + c[0] + '</span><span class="stat-value">' + c[1] + '</span></div>').join("") +
+      (k.not_enrolled ? '<div class="stat-card"><span class="stat-label">ยังไม่ลงทะเบียน/นอกกลุ่มเป้าหมาย</span><span class="stat-value" style="color:var(--muted)">' + k.not_enrolled + '</span></div>' : "") +
+      (d.due.overdue ? '<div class="stat-card"><span class="stat-label">เกินกำหนดนัด</span><span class="stat-value" style="color:var(--danger)">' + d.due.overdue + '</span></div>' : "");
+    $("dash-cov-bar").style.width = d.coverage + "%"; $("dash-cov-text").textContent = "ความครอบคลุม " + d.coverage + "% (" + k.complete + "/" + d.kpi.target + " ราย)";
+    const max = Math.max(1, ...d.timeline.map(t => t.count));
+    $("dash-timeline").innerHTML = d.timeline.length ? d.timeline.map(t => '<div title="' + fmtDate(t.date) + ': ' + t.count + ' โดส" style="flex:1;background:linear-gradient(180deg,var(--primary),rgba(var(--primary-rgb),.4));border-radius:3px 3px 0 0;height:' + Math.max(4, t.count / max * 68) + 'px"></div>').join("") : '<div class="card-sub">ยังไม่มีข้อมูลรายวัน</div>';
+    $("dash-dept-body").innerHTML = d.byDept.length ? d.byDept.map(x => '<tr><td>' + escapeHtml(x.name) + '</td><td>' + x.target + '</td><td>' + x.complete + '</td><td style="width:120px"><div class="progress-bar"><div class="progress-fill" style="width:' + Math.round(x.complete / x.target * 100) + '%"></div></div></td></tr>').join("") : '<tr><td colspan="4"><div class="empty-state">ไม่มีข้อมูล</div></td></tr>';
+    updateBadges(d);
+  })).withFailureHandler(busy(e => showToast("โหลดไม่สำเร็จ: " + errMsg(e), "error"))).getDashboard(STATE.campaignId);
+}
+function updateBadges(d) {
+  const due = (d.due.overdue || 0) + (d.due.due || 0); $("badge-due").textContent = due; $("badge-due").classList.toggle("hidden", !due);
+  const dq = d.dq.total; $("badge-dq").textContent = dq; $("badge-dq").classList.toggle("hidden", !dq);
+  const st = (d.alerts || []).filter(a => /Lot|โดส/.test(a.text)).length; $("badge-stock").textContent = st; $("badge-stock").classList.toggle("hidden", !st);
+}
+</script>
+<script>
+/* ============================================================ 6) STAFF: list + search + profile + form */
+let staffSearchTimer = null;
+function loadStaff(quiet) {   // quiet===true: เรียกจากการพิมพ์ค้นหา ไม่ขึ้น overlay
+  const f = { q: $("staff-q").value, deptId: $("staff-dept-filter").value, status: $("staff-status-filter").value, campaignId: STATE.campaignId, state: $("staff-state-filter").value, limit: 500 };
+  beginBusy();
+  (quiet === true ? gs.run.silent() : gs.run).withSuccessHandler(busy(res => {
+    STATE.staffCache = res.rows;
+    $("staff-count").textContent = "พบ " + res.total + " รายการ" + (res.total >= 500 ? " (แสดงสูงสุด 500 รายการแรก — ค้นหาให้แคบลง)" : "");
+    $("staff-body").innerHTML = res.rows.length ? res.rows.map(s => {
+      const st = s.states[STATE.campaignId];
+      return '<tr class="staff-row-tr" data-id="' + s.id + '" style="cursor:pointer">' +
+        '<td><div class="staff-row"><div class="avatar">' + initials(s) + '</div><div>' + escapeHtml(fullName(s)) + (s.verified !== "yes" ? ' <span class="badge badge-warning">รอตรวจสอบ</span>' : '') + '</div></div></td>' +
+        '<td>' + escapeHtml(s.dept || "-") + '</td><td>' + (s.age != null ? s.age : "-") + '</td>' +
+        '<td>' + escapeHtml(s.cid || "-") + (s.hasCid && !s.cidOk ? ' <span class="material-icons-outlined" style="font-size:15px;color:var(--danger)" title="เลขบัตรไม่ผ่านการตรวจสอบ">error</span>' : '') + '</td>' +
+        '<td>' + (st ? stateBadge(st.state) + (st.overdue ? ' <span class="badge badge-incomplete">เกิน ' + st.overdue + ' วัน</span>' : '') : '<span class="badge badge-neutral">-</span>') + '</td>' +
+        '<td>' + ({ active: "ปฏิบัติงาน", resigned: "ลาออก", transferred: "ย้ายหน่วยงาน", leave: "ลา/พักงาน" }[s.status] || s.status) + '</td></tr>';
+    }).join("") : '<tr><td colspan="6"><div class="empty-state">ไม่พบข้อมูล</div></td></tr>';
+  })).withFailureHandler(busy(e => showToast(errMsg(e), "error"))).listStaff(f);
+}
+["staff-q"].forEach(id => $(id).addEventListener("input", () => { clearTimeout(staffSearchTimer); staffSearchTimer = setTimeout(() => loadStaff(true), 350); }));
+["staff-dept-filter", "staff-status-filter", "staff-state-filter"].forEach(id => $(id).addEventListener("change", loadStaff));
+document.addEventListener("click", e => { const tr = e.target.closest(".staff-row-tr"); if (tr) openProfile(tr.dataset.id); });
+
+function openProfile(id) {
+  const m = openModal('<div class="skeleton" style="height:20px;width:50%;margin-bottom:14px"></div><div class="skeleton" style="height:100px"></div>', { wide: true });
+  gs.run.withSuccessHandler(p => renderProfile(m, p)).withFailureHandler(e => showToast(errMsg(e), "error")).getProfile(id);
+}
+function renderProfile(m, p) {
+  const s = p.staff;
+  m.querySelector(".modal-box").innerHTML = '<span class="modal-close material-icons-outlined" id="modal-close-btn">close</span>' +
+    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><div class="avatar" style="width:52px;height:52px;font-size:18px">' + initials(s) + '</div><div><div style="font-weight:700;font-size:16px">' + escapeHtml(fullName(s)) + '</div><div class="card-sub">' + escapeHtml(s.dept || "-") + ' • ' + escapeHtml(s.position || "-") + '</div></div></div>' +
+    '<div class="kv" style="margin-bottom:14px">' +
+      '<b>เลขบัตร ปชช.</b><span>' + escapeHtml(s.cid || "-") + (s.hasCid ? ' <a href="#" id="btn-reveal-cid" style="font-size:12px">แสดงเต็ม</a>' : '') + '</span>' +
+      '<b>วันเกิด</b><span>' + fmtDate(s.birthDate) + (s.age != null ? " (อายุ " + s.age + " ปี)" : "") + '</span>' +
+      '<b>เบอร์โทร</b><span>' + escapeHtml(s.phone || "-") + '</span><b>HN</b><span>' + escapeHtml(s.hn || "-") + '</span>' +
+      '<b>สถานะ</b><span>' + escapeHtml(s.status) + ' <a href="#" id="btn-edit-status" style="font-size:12px">เปลี่ยน</a></span>' +
+    '</div>' +
+    '<b>สถานะรายแคมเปญ</b>' +
+    '<div class="table-wrap" style="margin:8px 0 14px"><table class="data-table"><thead><tr><th>แคมเปญ</th><th>กลุ่ม</th><th>สถานะ</th><th>เข็มถัดไป</th><th>ตรวจภูมิ</th></tr></thead><tbody>' +
+      (p.states.length ? p.states.map(x => '<tr><td>' + escapeHtml(x.name) + '</td><td>' + escapeHtml(x.cohort || "-") + '</td><td>' + stateBadge(x.state) + '</td><td>' + (x.next ? "เข็ม " + x.next + (x.target ? " (เป้าหมาย " + fmtDate(x.target) + ")" : "") : "-") + '</td><td>' + (x.titerFrom ? fmtDate(x.titerFrom) + "–" + fmtDate(x.titerTo) : "-") + '</td></tr>').join("") : '<tr><td colspan="5"><div class="empty-state">ไม่มีข้อมูล</div></td></tr>') +
+    '</tbody></table></div>' +
+    '<b>ประวัติการฉีด</b>' +
+    '<div class="table-wrap" style="margin:8px 0"><table class="data-table"><thead><tr><th>วันที่</th><th>วัคซีน</th><th>เข็มที่</th><th>Lot</th><th>สถานะ HIS</th></tr></thead><tbody>' +
+      (p.doses.length ? p.doses.map(d => '<tr><td>' + fmtDate(d.date) + '</td><td>' + escapeHtml(d.vaccineCode) + '</td><td>' + d.doseNo + '</td><td>' + escapeHtml(d.lotNo || "-") + '</td><td>' + (d.hisStatus === "ok" ? '<span class="badge badge-complete">ok</span>' : d.hisStatus ? '<span class="badge badge-warning">' + escapeHtml(d.hisStatus) + '</span>' : "-") + '</td></tr>').join("") : '<tr><td colspan="5"><div class="empty-state">ยังไม่มีประวัติ</div></td></tr>') +
+    '</tbody></table></div>' +
+    (p.titers.length ? '<b>ผลตรวจ Anti-HBs</b><div class="card-sub" style="margin:6px 0 14px">' + p.titers.map(t => fmtDate(t.date) + ": " + t.valueMIU + " mIU/mL (" + escapeHtml(t.note) + ")").join("<br>") + '</div>' : '') +
+    '<div class="form-actions"><button class="btn btn-primary" id="btn-edit-staff">แก้ไขข้อมูล</button><button class="btn btn-outline" id="btn-goto-record">ไปหน้าบันทึกการฉีด</button></div>';
+  m.querySelector("#modal-close-btn").onclick = closeModal;
+  const rc = m.querySelector("#btn-reveal-cid"); if (rc) rc.onclick = e => { e.preventDefault(); const reason = prompt("ระบุเหตุผลที่ต้องการดูเลขบัตรเต็ม:"); if (!reason) return; gs.run.withSuccessHandler(r => { e.target.parentElement.firstChild.textContent = r.cid; }).withFailureHandler(er => showToast(errMsg(er), "error")).revealCid(s.id, reason); };
+  m.querySelector("#btn-edit-status").onclick = e => { e.preventDefault(); const opts = ["active", "resigned", "transferred", "leave"]; const labels = { active: "ปฏิบัติงาน", resigned: "ลาออก", transferred: "ย้ายหน่วยงาน", leave: "ลา/พักงาน" }; const choice = prompt("สถานะใหม่ (พิมพ์: " + opts.map(o => o + "=" + labels[o]).join(", ") + ")", s.status); if (!choice || opts.indexOf(choice) < 0) return; gs.run.withSuccessHandler(() => { showToast("อัปเดตสถานะแล้ว", "success"); closeModal(); loadStaff(); }).withFailureHandler(er => showToast(errMsg(er), "error")).setStaffStatus(s.id, choice, ""); };
+  m.querySelector("#btn-edit-staff").onclick = () => { closeModal(); openStaffForm(s.id); };
+  bindProfileExtras(m, p);
+  m.querySelector("#btn-goto-record").onclick = () => { closeModal(); goToPage("record"); $("rec-search").value = fullName(s); doRecSearch(fullName(s), s.id); };
+}
+
+/* ---------- ฟอร์มลงทะเบียน/แก้ไขบุคลากร ---------- */
+function fieldInputHtml(f, s) {
+  s = s || {};
+  const req = f.required ? ' <span class="req">*</span>' : "";
+  if (f.key === "deptId") return '<div class="form-field"><label>' + f.label + req + '</label><select id="f-deptId">' + STATE.depts.map(d => '<option value="' + d.id + '"' + (d.id === s.deptId ? " selected" : "") + '>' + escapeHtml(d.name) + '</option>').join("") + '</select></div>';
+  if (f.key === "birthDate") return '<div class="form-field"><label>' + f.label + req + '</label><input type="date" id="f-birthDate" value="' + (s.birthDate || "") + '"></div>';
+  if (f.key === "sex") return '<div class="form-field"><label>เพศ</label><select id="f-sex"><option value="">ไม่ระบุ</option><option' + (s.sex === "ชาย" ? " selected" : "") + '>ชาย</option><option' + (s.sex === "หญิง" ? " selected" : "") + '>หญิง</option></select></div>';
+  const val = s[f.key] || "";
+  return '<div class="form-field' + (f.key === "note" ? " full" : "") + '"><label>' + f.label + req + '</label><input id="f-' + f.key + '" value="' + escapeHtml(val) + '"></div>';
+}
+function openStaffForm(id) {
+  const s = id ? STATE.staffCache.find(x => x.id === id) : null;
+  function build(full) {
+    const fields = (STATE.settingsPublic.FORM_FIELDS || []).filter(f => f.show);
+    const html = '<h3 style="margin-top:0">' + (id ? "แก้ไขข้อมูลบุคลากร" : "ลงทะเบียนบุคลากรใหม่") + '</h3><div class="form-grid">' + fields.map(f => fieldInputHtml(f, full || s || {})).join("") + '</div>' +
+      '<div id="dup-warning"></div><div class="form-actions"><button class="btn btn-primary" id="btn-save-staff-form">บันทึก</button><button class="btn btn-outline" id="btn-cancel-staff-form">ยกเลิก</button></div>';
+    const m = openModal(html, { wide: true });
+    m.querySelector("#btn-cancel-staff-form").onclick = closeModal;
+    m.querySelector("#btn-save-staff-form").onclick = () => doSaveStaff(id, m, false);
+  }
+  if (id) { gs.run.withSuccessHandler(p => build(p.staff)).withFailureHandler(() => build({})).getProfile(id); } else build({});
+}
+function collectStaffForm() {
+  const f = {}; (STATE.settingsPublic.FORM_FIELDS || []).filter(x => x.show).forEach(x => { const el = $("f-" + x.key); if (el) f[x.key] = el.value; }); return f;
+}
+function doSaveStaff(id, m, force) {
+  const f = collectStaffForm(); if (id) f.id = id;
+  const btn = m.querySelector("#btn-save-staff-form"); setBtnLoading(btn, true);
+  gs.run.withSuccessHandler(r => {
+    setBtnLoading(btn, false);
+    if (r.ok === false && r.duplicates && r.duplicates.length) {
+      m.querySelector("#dup-warning").innerHTML = '<div class="alert-box warning"><span class="material-icons-outlined">warning</span><div><b>อาจซ้ำกับข้อมูลเดิม:</b><br>' + r.duplicates.map(d => escapeHtml(d.name) + " (" + escapeHtml(d.dept) + ")" + (d.sameCid ? " — เลขบัตรตรงกัน" : "")).join("<br>") + '<br><button class="btn btn-sm btn-danger" id="btn-force-save" style="margin-top:8px">บันทึกเป็นคนใหม่ต่อไป</button></div></div>';
+      m.querySelector("#btn-force-save").onclick = () => doSaveStaff(id, m, true);
+      return;
+    }
+    showToast("บันทึกข้อมูลเรียบร้อย", "success"); closeModal(); loadStaff();
+  }).withFailureHandler(e => { setBtnLoading(btn, false); showToast(errMsg(e), "error"); }).saveStaff(f, { force: !!force });
+}
+$("btn-new-staff").onclick = () => openStaffForm(null);
+</script>
+<script>
+/* ============================================================ 7) RECORD DOSE */
+function todayIso() { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+function initRecordPage() {
+  $("rec-date").value = todayIso(); $("ses-date").value = todayIso();
+  $("rec-campaign").innerHTML = STATE.campaigns.filter(c => c.status === "open").map(c => '<option value="' + c.id + '">' + escapeHtml(c.name) + '</option>').join("");
+  $("ses-campaign").innerHTML = $("rec-campaign").innerHTML;
+  $("log-campaign").innerHTML = STATE.campaigns.map(c => '<option value="' + c.id + '">' + escapeHtml(c.name) + '</option>').join("");
+  $("rec-vaccinator").value = STATE.user.name;
+  loadLotsForRecord();
+}
+let recSearchTimer = null;
+$("rec-search").addEventListener("input", e => { clearTimeout(recSearchTimer); const v = e.target.value; recSearchTimer = setTimeout(() => doRecSearch(v), 300); });
+function doRecSearch(v, autoPick) {
+  if (!v || v.length < 2) { $("rec-search-results").innerHTML = ""; return; }
+  (autoPick ? gs.run : gs.run.silent()).withSuccessHandler(res => {
+    const rows = res.rows.slice(0, 8);
+    if (autoPick) { const hit = rows.find(r => r.id === autoPick); if (hit) return pickRecStaff(hit); }
+    $("rec-search-results").innerHTML = rows.map(r => '<div class="chip" style="cursor:pointer;margin:3px 4px 0 0;display:inline-flex" data-pick="' + r.id + '">' + escapeHtml(fullName(r)) + ' • ' + escapeHtml(r.dept || "-") + '</div>').join("") || "ไม่พบ";
+  }).listStaff({ q: v, limit: 8 });
+}
+document.addEventListener("click", e => { const p = e.target.closest("[data-pick]"); if (p) { const id = p.dataset.pick; gs.run.withSuccessHandler(prof => pickRecStaff(prof.staff)).getProfile(id); } });
+function pickRecStaff(s) {
+  STATE.recStaff = s; $("rec-search-results").innerHTML = ""; $("rec-search").value = fullName(s);
+  $("rec-selected").classList.remove("hidden");
+  $("rec-staff-box").innerHTML = '<span class="material-icons-outlined">person</span><div><b>' + escapeHtml(fullName(s)) + '</b> — ' + escapeHtml(s.dept || "-") + (s.age != null ? " • อายุ " + s.age + " ปี" : "") + '</div>';
+  onRecCampaignChange();
+}
+function currentRecVaccine() { const c = campById($("rec-campaign").value); return c ? STATE.vaccines.find(v => v.code === c.vaccineCode) : null; }
+function onRecCampaignChange() {
+  const vac = currentRecVaccine();
+  $("rec-screening").innerHTML = vac ? vac.screening.map(q => '<label class="choice-pill" style="display:flex;margin-bottom:4px"><input type="checkbox" data-screen="' + q.id + '" data-action="' + q.action + '"><span>' + escapeHtml(q.text) + '</span></label>').join("") : "";
+  refreshLotOptions();
+  if (STATE.recStaff) runCheckDose();
+}
+function refreshLotOptions() {
+  const c = campById($("rec-campaign").value); if (!c) return;
+  const lots = STATE.lotsCache.filter(l => l.vaccineCode === c.vaccineCode && l.status !== "quarantine");
+  $("rec-lot").innerHTML = '<option value="">-- เลือก Lot --</option>' + lots.map(l => '<option value="' + l.id + '">' + escapeHtml(l.lotNo) + " (หมดอายุ " + fmtDate(l.expDate) + (l.remaining != null ? ", เหลือ " + l.remaining : "") + ')</option>').join("");
+}
+function loadLotsForRecord() { gs.run.withSuccessHandler(rows => { STATE.lotsCache = rows; refreshLotOptions(); }).listLots(); }
+$("rec-campaign").addEventListener("change", onRecCampaignChange);
+$("rec-date").addEventListener("change", runCheckDose);
+$("rec-lot").addEventListener("change", runCheckDose);
+document.addEventListener("change", e => { if (e.target.matches('[data-screen]')) runCheckDose(); });
+
+function runCheckDose() {
+  if (!STATE.recStaff) return;
+  const sc = { confirmed: $("rec-screen-confirm").checked };
+  document.querySelectorAll('[data-screen]').forEach(el => sc[el.dataset.screen] = el.checked);
+  gs.run.withSuccessHandler(chk => {
+    $("rec-doseno").value = chk.info.doseNo || "";
+    let html = "";
+    chk.blocks.forEach(b => html += '<div class="alert-box danger"><span class="material-icons-outlined">block</span><div>' + escapeHtml(b.msg) + (b.overridable ? ' <i>(ยกเว้นได้พร้อมระบุเหตุผล)</i>' : '') + '</div></div>');
+    chk.warns.forEach(w => html += '<div class="alert-box warning"><span class="material-icons-outlined">warning</span><div>' + escapeHtml(w.msg) + '</div></div>');
+    if (chk.info.state) html += '<div class="alert-box info"><span class="material-icons-outlined">info</span><div>สถานะ: ' + stateLabel(chk.info.state) + (chk.info.earliest ? ' • เร็วสุด ' + fmtDate(chk.info.earliest) : '') + '</div></div>';
+    $("rec-checks").innerHTML = html;
+    $("rec-override-wrap").classList.toggle("hidden", !chk.blocks.length);
+    $("btn-rec-save").disabled = chk.blocks.some(b => !b.overridable);
+  }).withFailureHandler(e => showToast(errMsg(e), "error")).checkDose({ staffId: STATE.recStaff.id, campaignId: $("rec-campaign").value, date: $("rec-date").value, lotId: $("rec-lot").value, screening: sc });
+}
+$("btn-rec-save").onclick = () => {
+  const sc = { confirmed: $("rec-screen-confirm").checked }; document.querySelectorAll('[data-screen]').forEach(el => sc[el.dataset.screen] = el.checked);
+  const payload = { staffId: STATE.recStaff.id, campaignId: $("rec-campaign").value, date: $("rec-date").value, lotId: $("rec-lot").value, site: $("rec-site").value, vaccinator: $("rec-vaccinator").value, screening: sc, override: $("rec-override").value };
+  setBtnLoading($("btn-rec-save"), true);
+  gs.run.withSuccessHandler(r => { setBtnLoading($("btn-rec-save"), false); showToast("บันทึกการฉีดสำเร็จ (เข็มที่ " + r.doseNo + ")", "success"); $("btn-rec-cancel").click(); loadLotsForRecord(); })
+    .withFailureHandler(e => { setBtnLoading($("btn-rec-save"), false); showToast(errMsg(e), "error"); }).recordDose(payload);
+};
+$("btn-rec-cancel").onclick = () => { STATE.recStaff = null; $("rec-search").value = ""; $("rec-search-results").innerHTML = ""; $("rec-selected").classList.add("hidden"); $("rec-override").value = ""; };
+
+/* ---------- โหมดรอบฉีด (หลายคน) ---------- */
+function loadSessionList() {
+  const c = campById($("ses-campaign").value); if (!c) return;
+  const lots = STATE.lotsCache.filter(l => l.vaccineCode === c.vaccineCode && l.status !== "quarantine");
+  $("ses-lot").innerHTML = '<option value="">-- เลือก Lot --</option>' + lots.map(l => '<option value="' + l.id + '">' + escapeHtml(l.lotNo) + " (เหลือ " + (l.remaining != null ? l.remaining : "?") + ')</option>').join("");
+  gs.run.withSuccessHandler(res => {
+    $("ses-body").innerHTML = res.rows.filter(r => r.kind !== "waiting" || true).map(r => '<tr><td><input type="checkbox" class="ses-pick" data-id="' + r.staffId + '" data-dose="' + r.doseNo + '"></td><td>' + escapeHtml(r.name) + '</td><td>' + escapeHtml(r.dept) + '</td><td>' + r.doseNo + '</td><td>' + ({ overdue: '<span class="badge badge-incomplete">เกินกำหนด</span>', due: '<span class="badge badge-warning">ถึงกำหนด</span>', soon: '<span class="badge badge-info">ใกล้ถึง</span>', waiting: '<span class="badge badge-neutral">ยังไม่ถึง</span>' }[r.kind]) + '</td></tr>').join("") || '<tr><td colspan="5"><div class="empty-state">ไม่มีผู้ค้างรับ</div></td></tr>';
+  }).listDue(c.id, { deptId: $("ses-dept").value });
+}
+$("ses-campaign").addEventListener("change", loadSessionList); $("ses-dept").addEventListener("change", loadSessionList);
+$("ses-checkall").addEventListener("change", e => document.querySelectorAll(".ses-pick").forEach(c => c.checked = e.target.checked));
+$("btn-ses-save").onclick = () => {
+  const lot = $("ses-lot").value; if (!lot) return showToast("กรุณาเลือก Lot", "error");
+  const picks = [...document.querySelectorAll(".ses-pick:checked")].map(c => ({ staffId: c.dataset.id, doseNo: +c.dataset.dose }));
+  if (!picks.length) return showToast("ยังไม่ได้เลือกรายชื่อ", "error");
+  const common = { campaignId: $("ses-campaign").value, date: $("ses-date").value, lotId: lot, screening: { confirmed: true }, vaccinator: STATE.user.name };
+  setBtnLoading($("btn-ses-save"), true);
+  gs.run.withSuccessHandler(out => {
+    setBtnLoading($("btn-ses-save"), false); const ok = out.filter(o => o.ok).length;
+    $("ses-result").innerHTML = '<div class="alert-box ' + (ok === out.length ? "success" : "warning") + '">บันทึกสำเร็จ ' + ok + '/' + out.length + ' ราย' + (ok < out.length ? "<br>" + out.filter(o => !o.ok).map(o => escapeHtml(o.staffId) + ": " + escapeHtml(o.error)).join("<br>") : "") + '</div>';
+    loadSessionList(); loadLotsForRecord();
+  }).withFailureHandler(e => { setBtnLoading($("btn-ses-save"), false); showToast(errMsg(e), "error"); }).recordSession(picks, common);
+};
+document.querySelector('[data-tab="rec-session"]').addEventListener("click", loadSessionList);
+
+function loadSessionLog() {
+  gs.run.withSuccessHandler(r => {
+    $("log-body").innerHTML = r.rows.length ? r.rows.map(x => '<tr><td>' + fmtDate(x.date) + '</td><td>' + escapeHtml(x.lotNo) + '</td><td>' + x.count + '</td><td>' + x.cumulative + '</td><td>' + (x.remaining == null ? "-" : x.remaining) + '</td></tr>').join("") : '<tr><td colspan="5"><div class="empty-state">ยังไม่มีข้อมูล</div></td></tr>';
+  }).getSessionLog($("log-campaign").value);
+}
+$("log-campaign").addEventListener("change", loadSessionLog);
+</script>
+<script>
+/* ============================================================ 8) FOLLOW-UP */
+function loadFollowup() {
+  $("due-campaign").innerHTML = STATE.campaigns.filter(c => c.status === "open").map(c => '<option value="' + c.id + '"' + (c.id === STATE.campaignId ? " selected" : "") + '>' + escapeHtml(c.name) + '</option>').join("");
+  $("plan-campaign").innerHTML = $("due-campaign").innerHTML;
+  loadDue();
+}
+const KIND_LABEL = { overdue: '<span class="badge badge-incomplete">เกินกำหนด</span>', due: '<span class="badge badge-warning">ถึงกำหนดนัด</span>', soon: '<span class="badge badge-info">ใกล้ถึงกำหนด</span>', waiting: '<span class="badge badge-neutral">ยังไม่ถึง</span>' };
+function loadDue() {
+  const cid = $("due-campaign").value; if (!cid) { $("due-body").innerHTML = ""; return; }
+  gs.run.withSuccessHandler(res => {
+    $("due-body").innerHTML = res.rows.length ? res.rows.map(r => '<tr><td>' + KIND_LABEL[r.kind] + '</td><td>' + escapeHtml(r.name) + '</td><td>' + escapeHtml(r.dept) + '</td><td>เข็ม ' + r.doseNo + '</td><td>' + fmtDate(r.earliest) + '</td><td>' + fmtDate(r.target) + '</td><td>' + (r.overdue ? r.overdue + " วัน" : "-") + '</td><td>' + escapeHtml(r.phone || "-") + '</td></tr>').join("") : '<tr><td colspan="8"><div class="empty-state">ไม่มีผู้ค้างรับในแคมเปญนี้</div></td></tr>';
+  }).listDue(cid, { deptId: $("due-dept").value });
+}
+$("due-campaign").addEventListener("change", loadDue); $("due-dept").addEventListener("change", loadDue);
+
+function loadHis() {
+  gs.run.withSuccessHandler(rows => {
+    $("his-body").innerHTML = rows.length ? rows.map(r => '<tr><td>' + escapeHtml(r.name) + '</td><td>' + escapeHtml(r.hn || "-") + '</td><td>' + escapeHtml(r.vaccineCode) + ' เข็ม ' + r.doseNo + '</td><td>' + fmtDate(r.date) + '</td><td><span class="badge badge-warning">' + escapeHtml(r.hisStatus) + '</span></td><td><button class="btn btn-sm btn-secondary" data-his-ok="' + r.id + '">ทำเครื่องหมายว่า OK</button></td></tr>').join("") : '<tr><td colspan="6"><div class="empty-state">ไม่มีรายการค้าง</div></td></tr>';
+  }).listHis();
+}
+document.addEventListener("click", e => { const b = e.target.closest("[data-his-ok]"); if (b) gs.run.withSuccessHandler(() => { showToast("อัปเดตแล้ว", "success"); loadHis(); }).markHis(b.dataset.hisOk, "ok"); });
+
+function loadTiterDue() {
+  gs.run.withSuccessHandler(rows => {
+    $("titer-body").innerHTML = rows.length ? rows.map(r => '<tr><td>' + escapeHtml(r.name) + '</td><td>' + escapeHtml(r.dept) + '</td><td>' + fmtDate(r.lastDate) + '</td><td>' + fmtDate(r.from) + '–' + fmtDate(r.to) + '</td><td>' + ({ wait: '<span class="badge badge-neutral">ยังไม่ถึง</span>', now: '<span class="badge badge-warning">ถึงเวลาตรวจ</span>', late: '<span class="badge badge-incomplete">เลยช่วงแนะนำ</span>' }[r.status]) + '</td><td><button class="btn btn-sm btn-secondary" data-titer="' + r.staffId + '">บันทึกผล</button></td></tr>').join("") : '<tr><td colspan="6"><div class="empty-state">ไม่มีรายการรอตรวจ</div></td></tr>';
+  }).listTiterDue();
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-titer]"); if (!b) return;
+  const v = prompt("ผลตรวจ Anti-HBs (mIU/mL):"); if (v == null || v === "") return;
+  gs.run.withSuccessHandler(r => { showToast(r.immune ? "บันทึกแล้ว: มีภูมิคุ้มกัน" : "บันทึกแล้ว: ภูมิคุ้มกันต่ำ ควรพิจารณาฉีดชุดใหม่", r.immune ? "success" : "warning"); loadTiterDue(); }).saveTiter({ staffId: b.dataset.titer, vaccineCode: "HB", valueMIU: v });
+});
+
+function loadPlan() {
+  const cid = $("plan-campaign").value; if (!cid) return;
+  gs.run.withSuccessHandler(p => {
+    let html = '<div class="grid-3">' +
+      '<div class="stat-card"><span class="stat-label">ผู้ค้างรับ</span><span class="stat-value">' + p.pendingPeople + '</span></div>' +
+      '<div class="stat-card"><span class="stat-label">โดสที่ต้องใช้</span><span class="stat-value">' + p.totalDosesNeeded + '</span></div>' +
+      '<div class="stat-card"><span class="stat-label">คงเหลือจริง/จัดสรร</span><span class="stat-value">' + (p.stock.hasLedger ? p.stock.remaining : (p.allocation.remaining == null ? "-" : p.allocation.remaining)) + '</span></div></div>';
+    if (p.shortage) html += '<div class="alert-box danger"><span class="material-icons-outlined">warning</span><div>คาดว่าจะขาดอีก <b>' + p.shortage + ' โดส</b>' + (p.vialsToOrder ? " (≈ " + p.vialsToOrder + " ขวด)" : "") + " — ควรของบ/เบิกเพิ่ม</div></div>";
+    if (p.tips.length) html += p.tips.map(t => '<div class="alert-box info"><span class="material-icons-outlined">lightbulb</span><div>' + escapeHtml(t) + '</div></div>').join("");
+    html += '<div class="card"><b>ข้อเสนอตารางนัด (แบ่งตามวันในสัปดาห์)</b><div class="table-wrap" style="margin-top:8px"><table class="data-table"><thead><tr><th>วันที่แนะนำ</th><th>จำนวนคน</th><th>เข็มที่</th><th>ขวดที่ต้องเปิด</th><th>คนที่เกินกำลังรับ/วัน</th></tr></thead><tbody>' +
+      p.sessions.map(s => '<tr><td>' + fmtDate(s.date) + '</td><td>' + s.total + '</td><td>' + Object.keys(s.byDose).map(k => "เข็ม" + k + ":" + s.byDose[k]).join(", ") + '</td><td>' + s.vials + '</td><td>' + (s.overCapacity ? '<span class="badge badge-warning">เกินกำลังรับ (' + p.capacity + '/วัน)</span>' : "-") + '</td></tr>').join("") + '</tbody></table></div></div>';
+    if (p.byDept.length) html += '<div class="card" style="margin-top:14px"><b>แยกตามหน่วยงาน</b><div class="table-wrap" style="margin-top:8px"><table class="data-table"><thead><tr><th>หน่วยงาน</th><th>จำนวนค้างรับ</th></tr></thead><tbody>' + p.byDept.map(d => '<tr><td>' + escapeHtml(d.dept) + '</td><td>' + d.count + '</td></tr>').join("") + '</tbody></table></div></div>';
+    $("plan-result").innerHTML = html;
+  }).planCampaign(cid, {});
+}
+$("plan-campaign").addEventListener("change", loadPlan);
+</script>
+<script>
+/* ============================================================ 9) STOCK / LOTS */
+function loadStock() {
+  gs.run.withSuccessHandler(rows => {
+    STATE.lotsCache = rows;
+    $("lots-body").innerHTML = rows.length ? rows.map(l => {
+      const flagBadge = l.flags.indexOf("expired") >= 0 ? '<span class="badge badge-incomplete">หมดอายุ</span>' : l.flags.indexOf("near_expiry") >= 0 ? '<span class="badge badge-warning">ใกล้หมดอายุ (' + l.daysToExpiry + " วัน)</span>" : l.flags.indexOf("quarantine") >= 0 ? '<span class="badge badge-warning">กักกัน</span>' : l.flags.indexOf("empty") >= 0 ? '<span class="badge badge-neutral">หมดสต็อก</span>' : '<span class="badge badge-complete">ปกติ</span>';
+      return '<tr><td>' + escapeHtml(l.vaccineCode) + '</td><td>' + escapeHtml(l.lotNo) + '</td><td>' + fmtDate(l.expDate) + '</td><td>' + (l.remaining == null ? "ไม่มีข้อมูลรับเข้า" : l.remaining) + '</td><td>' + flagBadge + '</td>' +
+        '<td><button class="btn btn-sm btn-outline" data-ledger="' + l.id + '">Ledger</button> <button class="btn btn-sm btn-secondary" data-addtx="' + l.id + '">รับ/ตัดสต็อก</button></td></tr>';
+    }).join("") : '<tr><td colspan="6"><div class="empty-state">ยังไม่มี Lot</div></td></tr>';
+  }).listLots();
+}
+document.addEventListener("click", e => {
+  const l = e.target.closest("[data-ledger]"); if (l) return openLedger(l.dataset.ledger);
+  const t = e.target.closest("[data-addtx]"); if (t) return openStockTx(t.dataset.addtx);
+});
+function openLedger(id) {
+  gs.run.withSuccessHandler(r => {
+    openModal('<h3 style="margin-top:0">Ledger: ' + escapeHtml(r.lot.lotNo) + '</h3><div class="table-wrap"><table class="data-table"><thead><tr><th>วันที่</th><th>รายการ</th><th>จำนวน</th><th>คงเหลือสะสม</th></tr></thead><tbody>' +
+      r.events.map(e => '<tr><td>' + fmtDate(e.date) + '</td><td>' + escapeHtml(e.kind) + (e.note ? " — " + escapeHtml(e.note) : "") + '</td><td>' + (e.qty > 0 ? "+" : "") + e.qty + '</td><td>' + e.balance + '</td></tr>').join("") + '</tbody></table></div>');
+  }).getLedger(id);
+}
+function openStockTx(lotId) {
+  const html = '<h3 style="margin-top:0">รับเข้า/ตัดสต็อก</h3><div class="form-grid">' +
+    '<div class="form-field"><label>ประเภท</label><select id="tx-type"><option value="receive">รับเข้า</option><option value="waste">สูญเสีย/ทิ้ง</option><option value="transfer_out">โอนออก</option><option value="adjust">ปรับยอด</option></select></div>' +
+    '<div class="form-field"><label>จำนวน (โดส)</label><input type="number" id="tx-qty" min="1"></div>' +
+    '<div class="form-field"><label>วันที่</label><input type="date" id="tx-date" value="' + todayIso() + '"></div>' +
+    '<div class="form-field"><label>แหล่งที่มา/ปลายทาง</label><input id="tx-source"></div>' +
+    '<div class="form-field full"><label>หมายเหตุ (บังคับกรณีสูญเสีย/ปรับยอด)</label><input id="tx-note"></div></div>' +
+    '<div class="form-actions"><button class="btn btn-primary" id="btn-tx-save">บันทึก</button></div>';
+  const m = openModal(html);
+  m.querySelector("#btn-tx-save").onclick = () => {
+    gs.run.withSuccessHandler(() => { showToast("บันทึกแล้ว", "success"); closeModal(); loadStock(); }).withFailureHandler(e => showToast(errMsg(e), "error"))
+      .addStockTx({ lotId: lotId, type: $("tx-type").value, qty: $("tx-qty").value, date: $("tx-date").value, source: $("tx-source").value, note: $("tx-note").value });
+  };
+}
+$("btn-new-lot").onclick = () => {
+  const html = '<h3 style="margin-top:0">รับ Lot ใหม่</h3><div class="form-grid">' +
+    '<div class="form-field"><label>วัคซีน</label><select id="lot-vaccine">' + STATE.vaccines.map(v => '<option value="' + v.code + '">' + escapeHtml(v.nameTh) + '</option>').join("") + '</select></div>' +
+    '<div class="form-field"><label>เลข Lot</label><input id="lot-no"></div>' +
+    '<div class="form-field"><label>วันหมดอายุ</label><input id="lot-exp" placeholder="วว/ดด/ปปปป"></div>' +
+    '<div class="form-field"><label>ผู้ผลิต</label><input id="lot-mfr"></div>' +
+    '<div class="form-field"><label>จำนวนรับเข้า (โดส)</label><input type="number" id="lot-qty" min="0"></div>' +
+    '<div class="form-field"><label>วันที่รับ</label><input type="date" id="lot-recv-date" value="' + todayIso() + '"></div></div>' +
+    '<div id="lot-similar"></div><div class="form-actions"><button class="btn btn-primary" id="btn-lot-save">บันทึก</button></div>';
+  const m = openModal(html);
+  m.querySelector("#btn-lot-save").onclick = () => saveLotForm(m, false);
+};
+function saveLotForm(m, force) {
+  const f = { vaccineCode: $("lot-vaccine").value, lotNo: $("lot-no").value, expDate: $("lot-exp").value, manufacturer: $("lot-mfr").value, receiveQty: $("lot-qty").value, receiveDate: $("lot-recv-date").value };
+  gs.run.withSuccessHandler(r => {
+    if (r.ok === false && r.similar) { $("lot-similar").innerHTML = '<div class="alert-box warning">คล้ายกับ Lot ' + escapeHtml(r.similar.lotNo) + " (หมดอายุ " + fmtDate(r.similar.expDate) + ') อาจพิมพ์ผิด — <button class="btn btn-sm btn-danger" id="btn-lot-force">ยืนยันว่าเป็นคนละ Lot</button></div>'; $("btn-lot-force").onclick = () => saveLotForm(m, true); return; }
+    showToast("บันทึก Lot แล้ว", "success"); closeModal(); loadStock();
+  }).withFailureHandler(e => showToast(errMsg(e), "error")).saveLot(f, { force: !!force });
+}
+
+/* ============================================================ 10) DATA QUALITY */
+const DQ_LABEL = { no_cid: "ไม่มีเลขบัตรประชาชน", bad_cid: "เลขบัตรไม่ผ่านการตรวจสอบ", no_birth: "ไม่มีวันเกิด", no_dept: "ไม่ระบุหน่วยงาน", unverified: "ลงทะเบียนเองรอตรวจสอบ", dup_person: "อาจเป็นบุคคลซ้ำ", dose_no_lot: "บันทึกฉีดที่ไม่มี Lot", dose_expired_lot: "ฉีดด้วย Lot ที่หมดอายุแล้ว", dose_future: "วันที่ฉีดเป็นอนาคต", his_open: "ค้างตรวจสอบใน HIS", interval_short: "ห่างจากเข็มก่อนหน้าน้อยกว่ากำหนด", config_problem: "กฎแคมเปญไม่ครบถ้วน", cohort_gap: "ปีเกิดไม่อยู่ในกลุ่มเป้าหมายใดเลย", lot_no_ledger: "Lot ที่ใช้ฉีดแต่ยังไม่ได้ตั้งยอดรับ", lot_expired_stock: "Lot หมดอายุแต่ยังมียอดคงเหลือ" };
+function loadQuality() {
+  gs.run.withSuccessHandler(dq => {
+    $("dq-stats").innerHTML = '<div class="stat-card"><span class="stat-label">รายการที่ควรตรวจสอบทั้งหมด</span><span class="stat-value">' + dq.total + '</span></div>';
+    const keys = Object.keys(dq.counts);
+    $("dq-detail").innerHTML = keys.length ? keys.map(k => '<details style="margin-bottom:10px"><summary style="cursor:pointer;font-weight:600">' + (DQ_LABEL[k] || k) + ' — ' + dq.counts[k] + ' รายการ</summary><div style="margin-top:8px">' +
+      dq.items[k].map(it => '<div class="issue-row warn">' + escapeHtml(it.name) + (it.detail ? " — " + escapeHtml(it.detail) : "") + '</div>').join("") + (dq.counts[k] > dq.items[k].length ? '<div class="card-sub">...และอีก ' + (dq.counts[k] - dq.items[k].length) + ' รายการ</div>' : '') + '</div></details>').join("") : '<div class="empty-state">ไม่พบปัญหาข้อมูล 🎉</div>';
+  }).dataQuality();
+}
+</script>
+<script>
+/* ============================================================ 11) CAMPAIGNS */
+function loadCampaigns() {
+  gs.run.withSuccessHandler(rows => {
+    STATE.campaigns = rows;
+    $("camp-body").innerHTML = rows.map(c => '<tr><td>' + escapeHtml(c.name) + (c.problems.length ? ' <span class="material-icons-outlined" style="color:var(--danger);font-size:16px" title="' + escapeHtml(c.problems.join(" / ")) + '">error</span>' : '') + '</td><td>' + c.fiscalYear + '</td><td>' + fmtDate(c.startDate) + ' – ' + fmtDate(c.endDate) + '</td><td>' + (c.allocatedDoses || "-") + '</td><td>' + ({ draft: '<span class="badge badge-neutral">ร่าง</span>', open: '<span class="badge badge-complete">เปิดใช้งาน</span>', closed: '<span class="badge badge-incomplete">ปิดแล้ว</span>' }[c.status]) + '</td>' +
+      '<td><button class="btn btn-sm btn-outline" data-camp-edit="' + c.id + '">แก้ไข</button> <button class="btn btn-sm btn-secondary" data-camp-clone="' + c.id + '">ทำสำเนา</button></td></tr>').join("");
+  }).listCampaigns();
+}
+document.addEventListener("click", e => {
+  const ed = e.target.closest("[data-camp-edit]"); if (ed) return openCampaignForm(ed.dataset.campEdit);
+  const cl = e.target.closest("[data-camp-clone]"); if (cl) { const fy = prompt("ปีงบประมาณใหม่ (พ.ศ.):"); if (!fy) return; gs.run.withSuccessHandler(() => { showToast("ทำสำเนาแล้ว", "success"); loadCampaigns(); }).withFailureHandler(er => showToast(errMsg(er), "error")).cloneCampaign(cl.dataset.campClone, +fy); }
+});
+$("btn-new-campaign").onclick = () => openCampaignForm(null);
+
+function ruleBuilderHtml(cfg) {
+  cfg = cfg || {};
+  const isCohort = (cfg.cohorts || []).length > 1;
+  return '<div class="tabs"><button class="tab-btn active" data-rtab="simple">แบบง่าย</button><button class="tab-btn" data-rtab="json">ขั้นสูง (JSON)</button></div>' +
+  '<div class="tabpane active" id="rtab-simple">' +
+    '<div class="form-field"><label>รูปแบบเป้าหมาย</label><select id="r-template"><option value="single"' + (!isCohort ? " selected" : "") + '>ทุกคน 1 เข็ม</option><option value="cohort2"' + (isCohort ? " selected" : "") + '>แบ่งตามปีเกิด (เช่น HB 3 เข็ม/1 เข็ม)</option></select></div>' +
+    '<div id="r-single" class="' + (isCohort ? "hidden" : "") + '"><div class="form-field"><label>ต้องได้รับกี่เข็ม</label><input type="number" id="r-need" value="' + ((cfg.cohorts || [{}])[0].need || 1) + '" min="1" max="6"></div></div>' +
+    '<div id="r-cohort2" class="' + (isCohort ? "" : "hidden") + '">' +
+      '<div class="form-grid"><div class="form-field"><label>ปีเกิด (พ.ศ.) ตัดที่ก่อนปี</label><input type="number" id="r-cutoff" value="' + (cfg.cohortCutoffBE || 2536) + '"></div>' +
+      '<div class="form-field"><label>กลุ่มเกิดก่อนปีตัด ต้องการกี่เข็ม</label><input type="number" id="r-need-a" value="' + ((cfg.cohorts || [])[0] ? cfg.cohorts[0].need : 3) + '"></div>' +
+      '<div class="form-field"><label>กลุ่มเกิดตั้งแต่ปีตัด ต้องการกี่เข็ม</label><input type="number" id="r-need-b" value="' + ((cfg.cohorts || [])[1] ? cfg.cohorts[1].need : 1) + '"></div></div>' +
+      '<div class="card-sub">เข็ม 2 ห่างจากเข็ม 1 อย่างน้อย 1 เดือน, เข็ม 3 ห่างจากเข็ม 1 อย่างน้อย 6 เดือน (ตามมาตรฐาน CDC/ACIP) — ปรับละเอียดได้ในโหมด JSON</div></div>' +
+    '<div class="form-field"><label class="choice-pill"><input type="checkbox" id="r-posttest"' + (cfg.postTest ? " checked" : "") + '><span>แนะนำตรวจภูมิคุ้มกัน (anti-HBs) หลังฉีดครบ</span></label></div>' +
+    '<div class="form-field"><label>เป้าหมายนับจาก</label><select id="r-target"><option value="all"' + (cfg.targetMode !== "enrolled" ? " selected" : "") + '>บุคลากรทุกคนที่ยังปฏิบัติงาน</option><option value="enrolled"' + (cfg.targetMode === "enrolled" ? " selected" : "") + '>เฉพาะผู้ลงทะเบียน/มีประวัติ</option></select></div>' +
+  '</div><div class="tabpane" id="rtab-json"><textarea id="r-json-raw" rows="12" style="width:100%;font-family:monospace;font-size:12px">' + escapeHtml(JSON.stringify(cfg, null, 2)) + '</textarea></div>';
+}
+function buildConfigFromSimple() {
+  const tpl = $("r-template").value, postTest = $("r-posttest").checked, target = $("r-target").value;
+  if (tpl === "single") return { countScope: "lifetime", targetMode: target, graceDays: 14, unknownBirthCohort: "ALL", postTest: postTest, cohorts: [{ id: "ALL", label: "บุคลากรทุกคน", need: +$("r-need").value, priorReduces: false }], schedule: {}, spacing: [] };
+  const cutoff = +$("r-cutoff").value, na = +$("r-need-a").value, nb = +$("r-need-b").value;
+  const schedule = {}; if (na >= 2) schedule[2] = { offsetMonths: 1, minIntervalDays: 28, minFromFirstDays: 0 }; if (na >= 3) schedule[3] = { offsetMonths: 6, minIntervalDays: 56, minFromFirstDays: 112 };
+  return { countScope: "lifetime", targetMode: target, graceDays: 14, unknownBirthCohort: "A", postTest: postTest, cohortCutoffBE: cutoff,
+    cohorts: [{ id: "A", label: "เกิดก่อน พ.ศ. " + cutoff + " (" + na + " เข็ม)", birthBeMax: cutoff - 1, need: na, priorReduces: true }, { id: "B", label: "เกิด พ.ศ. " + cutoff + " เป็นต้นไป (" + nb + " เข็ม)", birthBeMin: cutoff, need: nb, priorReduces: false }],
+    schedule: schedule, spacing: [] };
+}
+function openCampaignForm(id) {
+  const c = id ? STATE.campaigns.find(x => x.id === id) : null;
+  const html = '<h3 style="margin-top:0">' + (id ? "แก้ไขแคมเปญ" : "สร้างแคมเปญใหม่") + '</h3><div class="form-grid">' +
+    '<div class="form-field full"><label>ชื่อแคมเปญ</label><input id="c-name" value="' + escapeHtml(c ? c.name : "") + '"></div>' +
+    '<div class="form-field"><label>วัคซีน</label><select id="c-vaccine">' + STATE.vaccines.map(v => '<option value="' + v.code + '"' + (c && c.vaccineCode === v.code ? " selected" : "") + '>' + escapeHtml(v.nameTh) + '</option>').join("") + '</select></div>' +
+    '<div class="form-field"><label>ปีงบประมาณ (พ.ศ.)</label><input type="number" id="c-fy" value="' + (c ? c.fiscalYear : "") + '"></div>' +
+    '<div class="form-field"><label>วันเริ่ม</label><input type="date" id="c-start" value="' + (c ? c.startDate : "") + '"></div>' +
+    '<div class="form-field"><label>วันสิ้นสุด</label><input type="date" id="c-end" value="' + (c ? c.endDate : "") + '"></div>' +
+    '<div class="form-field"><label>โดสที่จัดสรร</label><input type="number" id="c-alloc" value="' + (c ? c.allocatedDoses : 0) + '"></div>' +
+    '<div class="form-field"><label>สถานะ</label><select id="c-status"><option value="draft"' + (c && c.status === "draft" ? " selected" : "") + '>ร่าง</option><option value="open"' + (c && c.status === "open" ? " selected" : "") + '>เปิดใช้งาน</option><option value="closed"' + (c && c.status === "closed" ? " selected" : "") + '>ปิดแล้ว</option></select></div>' +
+    '<div class="form-field full"><label>หมายเหตุการจัดสรร</label><input id="c-allocnote" value="' + escapeHtml(c ? c.allocationNote : "") + '"></div></div>' +
+    '<hr style="border-color:var(--border)"><b>กฎการนับเข็ม/กลุ่มเป้าหมาย</b>' + ruleBuilderHtml(c ? c.config : {}) +
+    '<div id="c-config-problems"></div><div class="form-actions"><button class="btn btn-primary" id="btn-camp-save">บันทึก</button></div>';
+  const m = openModal(html, { wide: true });
+  function toggleTpl() { const v = $("r-template").value; $("r-single").classList.toggle("hidden", v !== "single"); $("r-cohort2").classList.toggle("hidden", v !== "cohort2"); }
+  m.querySelector("#r-template").addEventListener("change", toggleTpl);
+  m.addEventListener("click", e => { const t = e.target.closest("[data-rtab]"); if (!t) return; m.querySelectorAll("[data-rtab]").forEach(b => b.classList.remove("active")); t.classList.add("active"); m.querySelectorAll("#rtab-simple,#rtab-json").forEach(p => p.classList.remove("active")); m.querySelector("#rtab-" + t.dataset.rtab).classList.add("active"); });
+  m.querySelector("#btn-camp-save").onclick = () => {
+    const jsonTab = m.querySelector("#rtab-json").classList.contains("active");
+    let config; try { config = jsonTab ? JSON.parse($("r-json-raw").value) : buildConfigFromSimple(); } catch (e) { return showToast("รูปแบบ JSON ไม่ถูกต้อง", "error"); }
+    const f = { id: id, name: $("c-name").value, vaccineCode: $("c-vaccine").value, fiscalYear: $("c-fy").value, startDate: $("c-start").value, endDate: $("c-end").value, allocatedDoses: $("c-alloc").value, allocationNote: $("c-allocnote").value, status: $("c-status").value, config: config };
+    gs.run.withSuccessHandler(() => { showToast("บันทึกแคมเปญแล้ว", "success"); closeModal(); loadCampaigns(); bootstrapApp(); }).withFailureHandler(e => showToast(errMsg(e), "error")).saveCampaign(f);
+  };
+}
+</script>
+<script>
+/* ============================================================ 12) SETTINGS */
+function loadSettingsPage() {
+  const s = STATE.settingsPublic;
+  $("set-sysname").value = s.SYS_NAME || ""; $("set-orgname").value = s.ORG_NAME || ""; $("set-welcome").value = s.WELCOME_MSG || "";
+  $("set-color-primary").value = s.COLOR_PRIMARY || "#0B5FBA"; $("set-color-secondary").value = s.COLOR_SECONDARY || "#12A594"; $("set-color-sidebar").value = s.COLOR_SIDEBAR_BG || "#0B3D6E";
+  $("set-selfreg").checked = s.SELF_REG_ENABLED === "yes"; $("set-selfcode").value = "";
+  loadDeptList(); loadVaccineList(); loadUsersList(); loadAuditList();
+}
+$("btn-save-settings").onclick = () => {
+  const input = { SYS_NAME: $("set-sysname").value, ORG_NAME: $("set-orgname").value, WELCOME_MSG: $("set-welcome").value, COLOR_PRIMARY: $("set-color-primary").value, COLOR_SECONDARY: $("set-color-secondary").value, COLOR_SIDEBAR_BG: $("set-color-sidebar").value, SELF_REG_ENABLED: $("set-selfreg").checked ? "yes" : "no" };
+  if ($("set-selfcode").value) input.SELF_REG_CODE = $("set-selfcode").value;
+  gs.run.withSuccessHandler(pub => { STATE.settingsPublic = pub; applyTheme(pub); showToast("บันทึกการตั้งค่าแล้ว", "success"); }).withFailureHandler(e => showToast(errMsg(e), "error")).saveSettings(input);
+};
+function loadDeptList() {
+  $("dept-list").innerHTML = STATE.depts.map(d => '<div class="dept-pill"><span>' + escapeHtml(d.name) + ' <span class="card-sub">(' + d.staffCount + ' คน)</span></span><button class="btn btn-sm btn-outline" data-dept-edit="' + d.id + '">แก้ไข</button></div>').join("");
+}
+$("btn-add-dept").onclick = () => { const name = $("new-dept-name").value.trim(); if (!name) return; gs.run.withSuccessHandler(() => { $("new-dept-name").value = ""; refreshDepts(); }).withFailureHandler(e => showToast(errMsg(e), "error")).saveDepartment({ name: name }); };
+document.addEventListener("click", e => { const d = e.target.closest("[data-dept-edit]"); if (!d) return; const dep = STATE.depts.find(x => x.id === d.dataset.deptEdit); const name = prompt("ชื่อหน่วยงาน:", dep.name); if (!name) return; gs.run.withSuccessHandler(() => refreshDepts()).saveDepartment({ id: dep.id, name: name, aliases: dep.aliases }); });
+function refreshDepts() { gs.run.withSuccessHandler(ds => { STATE.depts = ds; fillDeptSelects(); loadDeptList(); }).listDepartments(); }
+
+function loadVaccineList() {
+  $("vaccine-list").innerHTML = STATE.vaccines.map(v => '<div class="dept-pill" style="align-items:flex-start"><div><b>' + escapeHtml(v.nameTh) + '</b> <span class="card-sub">(' + v.code + (v.live === "yes" ? ", เชื้อเป็น" : "") + ', โดสต่อขวด ' + v.dosesPerVial + ')</span><div class="card-sub">คำถามคัดกรอง: ' + v.screening.length + ' ข้อ</div></div><button class="btn btn-sm btn-outline" data-vac-edit="' + v.code + '">แก้ไข</button></div>').join("") +
+    '<button class="btn btn-secondary" id="btn-new-vaccine" style="margin-top:10px">เพิ่มวัคซีนชนิดใหม่</button>';
+  $("btn-new-vaccine").onclick = () => openVaccineForm(null);
+}
+document.addEventListener("click", e => { const v = e.target.closest("[data-vac-edit]"); if (v) openVaccineForm(STATE.vaccines.find(x => x.code === v.dataset.vacEdit)); });
+function openVaccineForm(v) {
+  const html = '<h3 style="margin-top:0">' + (v ? "แก้ไขวัคซีน" : "เพิ่มวัคซีน") + '</h3><div class="form-grid">' +
+    '<div class="form-field"><label>รหัส (A-Z, ห้ามซ้ำ)</label><input id="v-code" value="' + (v ? v.code : "") + '"' + (v ? " readonly" : "") + '></div>' +
+    '<div class="form-field"><label>ชื่อไทย</label><input id="v-nameth" value="' + (v ? escapeHtml(v.nameTh) : "") + '"></div>' +
+    '<div class="form-field"><label>ชื่ออังกฤษ</label><input id="v-nameen" value="' + (v ? escapeHtml(v.nameEn) : "") + '"></div>' +
+    '<div class="form-field"><label>โดสต่อขวด</label><input type="number" id="v-dpv" value="' + (v ? v.dosesPerVial : 1) + '"></div>' +
+    '<div class="form-field"><label class="choice-pill"><input type="checkbox" id="v-live"' + (v && v.live === "yes" ? " checked" : "") + '><span>เป็นวัคซีนเชื้อเป็น (live)</span></label></div></div>' +
+    '<div class="form-field full"><label>คำถามคัดกรอง (บรรทัดละ 1 ข้อ ขึ้นต้นด้วย ! หากต้องการให้ "ห้ามฉีด")</label><textarea id="v-screen" rows="5">' + (v ? v.screening.map(q => (q.action === "stop" ? "!" : "") + q.text).join("\n") : "") + '</textarea></div>' +
+    '<div class="form-actions"><button class="btn btn-primary" id="btn-vac-save">บันทึก</button></div>';
+  const m = openModal(html);
+  m.querySelector("#btn-vac-save").onclick = () => {
+    const screening = $("v-screen").value.split("\n").map(l => l.trim()).filter(Boolean).map((t, i) => ({ id: "q" + i, text: t.replace(/^!/, ""), action: t.charAt(0) === "!" ? "stop" : "caution" }));
+    gs.run.withSuccessHandler(() => { showToast("บันทึกแล้ว", "success"); closeModal(); gs.run.withSuccessHandler(vs => { STATE.vaccines = vs; loadVaccineList(); }).listVaccines(); }).withFailureHandler(e => showToast(errMsg(e), "error"))
+      .saveVaccine({ code: $("v-code").value, nameTh: $("v-nameth").value, nameEn: $("v-nameen").value, dosesPerVial: $("v-dpv").value, live: $("v-live").checked ? "yes" : "no", screening: screening });
+  };
+}
+
+function loadUsersList() {
+  gs.run.withSuccessHandler(rows => {
+    $("users-body").innerHTML = rows.map(u => '<tr><td>' + escapeHtml(u.name) + (u.email ? '<div style="font-size:12px;opacity:.7">' + escapeHtml(u.email) + '</div>' : '') + '</td><td>' + ({ admin: "ผู้ดูแลระบบ", vaccinator: "ผู้ให้บริการวัคซีน", viewer: "ผู้ดูข้อมูล" }[u.role] || u.role) + '</td><td>' + (u.active === "no" ? '<span class="badge badge-neutral">ปิดใช้งาน</span>' : '<span class="badge badge-complete">ใช้งานอยู่</span>') + '</td><td><button class="btn btn-sm btn-outline" data-user-edit="' + u.id + '">แก้ไข</button></td></tr>').join("");
+    STATE.usersCache = rows;
+  }).listUsers();
+}
+document.addEventListener("click", e => { const u = e.target.closest("[data-user-edit]"); if (u) openUserForm(STATE.usersCache.find(x => x.id === u.dataset.userEdit)); });
+$("btn-new-user").onclick = () => openUserForm(null);
+function openUserForm(u) {
+  const html = '<h3 style="margin-top:0">' + (u ? "แก้ไขผู้ใช้" : "เพิ่มผู้ใช้ใหม่") + '</h3><div class="form-grid">' +
+    '<div class="form-field"><label>ชื่อผู้ใช้</label><input id="u-name" value="' + (u ? escapeHtml(u.name) : "") + '"></div>' +
+    '<div class="form-field"><label>สิทธิ์</label><select id="u-role"><option value="admin"' + (u && u.role === "admin" ? " selected" : "") + '>ผู้ดูแลระบบ (แก้ไขได้ทุกอย่าง)</option><option value="vaccinator"' + (u && u.role === "vaccinator" ? " selected" : "") + '>ผู้ให้บริการวัคซีน (บันทึก/ดูข้อมูล)</option><option value="viewer"' + (u && u.role === "viewer" ? " selected" : "") + '>ผู้ดูข้อมูล (ดูได้อย่างเดียว)</option></select></div>' +
+    '<div class="form-field"><label>อีเมล Google (สำหรับเข้าสู่ระบบด้วย Google)</label><input id="u-email" type="email" placeholder="name@sansaihospital.go.th" value="' + (u && u.email ? escapeHtml(u.email) : "") + '"></div>' +
+    '<div class="form-field"><label>PIN ใหม่ (เว้นว่างถ้าไม่เปลี่ยน)</label><input id="u-pin" type="password" placeholder="อย่างน้อย 6 ตัวอักษร"></div>' +
+    '<div class="form-field"><label class="choice-pill"><input type="checkbox" id="u-active"' + (!u || u.active !== "no" ? " checked" : "") + '><span>เปิดใช้งาน</span></label></div></div>' +
+    '<div class="form-actions"><button class="btn btn-primary" id="btn-user-save">บันทึก</button></div>';
+  const m = openModal(html);
+  m.querySelector("#btn-user-save").onclick = () => {
+    gs.run.withSuccessHandler(() => { showToast("บันทึกแล้ว", "success"); closeModal(); loadUsersList(); }).withFailureHandler(e => showToast(errMsg(e), "error"))
+      .saveUser({ id: u ? u.id : null, name: $("u-name").value, role: $("u-role").value, pin: $("u-pin").value, email: $("u-email").value, active: $("u-active").checked ? "yes" : "no" });
+  };
+}
+function loadAuditList() { gs.run.withSuccessHandler(rows => { $("audit-body").innerHTML = rows.map(a => '<tr><td>' + new Date(a.ts).toLocaleString("th-TH") + '</td><td>' + escapeHtml(a.user) + '</td><td>' + escapeHtml(a.action) + '</td><td>' + escapeHtml(a.entity) + ' ' + escapeHtml(a.detail || "") + '</td></tr>').join(""); }).getAudit(200); }
+</script>
+<script>
+/* ============================================================ 13) IMPORT WIZARD (SheetJS ในเบราว์เซอร์ → ส่งเป็นอาเรย์ให้ backend) */
+function readWorkbook(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const wb = XLSX.read(new Uint8Array(ev.target.result), { type: "array", cellDates: true });
+        const sheets = {};
+        wb.SheetNames.forEach(name => { sheets[name] = XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1, raw: true, defval: null }).map(row => row.map(c => c instanceof Date ? (c.getFullYear() + "-" + String(c.getMonth() + 1).padStart(2, "0") + "-" + String(c.getDate()).padStart(2, "0")) : c)); });
+        resolve(sheets);
+      } catch (e) { reject(e); }
+    };
+    reader.onerror = reject; reader.readAsArrayBuffer(file);
+  });
+}
+function renderIssues(list) {
+  const order = { error: 0, warn: 1, info: 2 }, sorted = list.slice().sort((a, b) => order[a.level] - order[b.level]);
+  $("imp-issues").innerHTML = sorted.slice(0, 300).map(i => '<div class="issue-row ' + i.level + '">' + (i.sheet ? '<b>[' + escapeHtml(i.sheet) + (i.row ? " แถว " + i.row : "") + ']</b> ' : "") + escapeHtml(i.msg) + '</div>').join("") + (sorted.length > 300 ? '<div class="card-sub">...และอีก ' + (sorted.length - 300) + ' รายการ</div>' : "");
+}
+function handleImportFile(file) {
+  $("imp-summary").innerHTML = '<div class="skeleton" style="height:60px"></div>'; $("imp-issues").innerHTML = ""; $("imp-actions").classList.add("hidden");
+  readWorkbook(file).then(sheets => {
+    STATE.importSheets = sheets; STATE.importKind = $("imp-kind").value;
+    beginBusy();
+    gs.run.withSuccessHandler(busy(r => {
+      STATE.importResult = r;
+      const s = r.stats;
+      $("imp-summary").innerHTML = '<div class="grid-3">' +
+        '<div class="stat-card"><span class="stat-label">บุคลากร: ใหม่ / จับคู่กับข้อมูลเดิม</span><span class="stat-value">' + s.staffNew + ' / ' + s.staffMatched + '</span></div>' +
+        '<div class="stat-card"><span class="stat-label">ประวัติการฉีดที่จะเพิ่ม</span><span class="stat-value">' + s.dosesNew + '</span></div>' +
+        '<div class="stat-card"><span class="stat-label">Lot ที่จะสร้างใหม่</span><span class="stat-value">' + s.lotsNew + '</span></div></div>' +
+        '<div class="card-sub" style="margin:10px 0">หน่วยงานใหม่: ' + s.deptNew + ' • ลงทะเบียนความประสงค์ใหม่: ' + s.enrollNew + ' • ซ้ำกับที่มีอยู่แล้ว (ข้าม): ' + s.dosesDup + ' รายการ</div>' +
+        '<div class="alert-box ' + (r.counts.error ? "danger" : "info") + '">พบข้อควรตรวจสอบ ' + (r.counts.error + r.counts.warn) + ' รายการ (ข้อผิดพลาด ' + r.counts.error + ', คำเตือน ' + r.counts.warn + ') — กรุณาอ่านรายการด้านล่างก่อนยืนยันนำเข้าจริง</div>';
+      renderIssues(r.issues);
+      $("imp-actions").classList.toggle("hidden", !!r.counts.error);
+    })).withFailureHandler(busy(e => { $("imp-summary").innerHTML = '<div class="alert-box danger">อ่านไฟล์ไม่สำเร็จ: ' + escapeHtml(errMsg(e)) + '</div>'; })).importPreview(STATE.importKind, sheets, {});
+  }).catch(e => { $("imp-summary").innerHTML = '<div class="alert-box danger">ไม่สามารถอ่านไฟล์นี้ได้: ' + escapeHtml(e.message) + '</div>'; });
+}
+$("imp-drop").onclick = () => $("imp-file").click();
+$("imp-file").addEventListener("change", e => { if (e.target.files[0]) handleImportFile(e.target.files[0]); });
+["dragover", "dragleave", "drop"].forEach(ev => $("imp-drop").addEventListener(ev, e => { e.preventDefault(); $("imp-drop").classList.toggle("drag", ev === "dragover"); if (ev === "drop" && e.dataTransfer.files[0]) handleImportFile(e.dataTransfer.files[0]); }));
+$("btn-imp-commit").onclick = () => {
+  if (!confirm("ยืนยันนำเข้าข้อมูลจริงหรือไม่? การกระทำนี้จะบันทึกลงฐานข้อมูล")) return;
+  setBtnLoading($("btn-imp-commit"), true);
+  gs.run.withSuccessHandler(r => { setBtnLoading($("btn-imp-commit"), false); showToast("นำเข้าข้อมูลสำเร็จ", "success"); $("imp-actions").classList.add("hidden"); renderIssues(r.issues); })
+    .withFailureHandler(e => { setBtnLoading($("btn-imp-commit"), false); showToast(errMsg(e), "error"); }).importCommit(STATE.importKind, STATE.importSheets, {});
+};
+</script>
+
+<script>
+/* ===== ส่วนเสริม: ความประสงค์/นัดหมาย/AEFI/ยกเลิกโดส/รวมรายชื่อ/เปลี่ยน PIN ===== */
+function askForm(title, fields, okLabel, onOk) {
+  const m = openModal('<h3 style="margin-top:0">' + title + '</h3><div class="form-grid">' + fields.map(f => '<div class="form-field' + (f.full ? ' full' : '') + '"><label>' + f.label + '</label>' + (f.options ? '<select id="ak-' + f.id + '">' + f.options.map(o => '<option value="' + escapeHtml(o[0]) + '"' + (o[0] === f.value ? ' selected' : '') + '>' + escapeHtml(o[1]) + '</option>').join('') + '</select>' : '<input id="ak-' + f.id + '" type="' + (f.type || 'text') + '" value="' + escapeHtml(f.value || '') + '" placeholder="' + escapeHtml(f.ph || '') + '">') + '</div>').join('') + '</div><div class="form-actions"><button class="btn btn-primary" id="ak-ok">' + okLabel + '</button><button class="btn btn-outline" id="ak-cancel">ยกเลิก</button></div>');
+  m.querySelector('#ak-cancel').onclick = closeModal;
+  m.querySelector('#ak-ok').onclick = () => { const v = {}; fields.forEach(f => v[f.id] = m.querySelector('#ak-' + f.id).value); onOk(v, m.querySelector('#ak-ok')); };
+}
+function rpc(name, args, okMsg, after) {
+  beginBusy();
+  gs.run.withSuccessHandler(busy(r => { if (okMsg) showToast(okMsg, 'success'); closeModal(); if (after) after(r); })).withFailureHandler(busy(e => showToast(errMsg(e), 'error')))[name](...args);
+}
+function bindProfileExtras(m, p) {
+  const s = p.staff, admin = STATE.user.role === 'admin', open = STATE.campaigns.filter(c => c.status === 'open');
+  const campOpts = (list) => list.map(c => [c.id, c.name]);
+  let html = '<div class="pf-actions"><button class="btn btn-sm btn-secondary" data-x="enroll"><span class="material-icons-outlined">how_to_reg</span> ความประสงค์/เคยฉีดมาแล้ว</button><button class="btn btn-sm btn-secondary" data-x="appt"><span class="material-icons-outlined">event</span> นัดหมาย</button><button class="btn btn-sm btn-secondary" data-x="aefi"><span class="material-icons-outlined">medical_services</span> บันทึกอาการหลังฉีด (AEFI)</button>' + (admin ? '<button class="btn btn-sm btn-outline" data-x="merge"><span class="material-icons-outlined">merge</span> รวมกับรายชื่อซ้ำ</button>' : '') + '</div>';
+  if ((p.appointments || []).length) html += '<div class="pf-sec"><b>นัดหมายที่รอ</b>' + p.appointments.map(a => '<div class="pf-row"><span>เข็ม ' + a.doseNo + ' • ' + fmtDate(a.plannedDate) + '</span><span class="badge badge-info">' + escapeHtml(a.status) + '</span></div>').join('') + '</div>';
+  if ((p.aefi || []).length) html += '<div class="pf-sec"><b>อาการหลังฉีด (AEFI)</b>' + p.aefi.map(a => '<div class="pf-row"><span>' + fmtDate(a.date) + ' — ' + escapeHtml(a.symptom || '-') + '</span><span class="badge ' + (a.severity === 'mild' ? 'badge-neutral' : 'badge-incomplete') + '">' + escapeHtml(a.severity) + '</span></div>').join('') + '</div>';
+  const given = (p.doses || []).filter(d => d.status === 'given');
+  if (admin && given.length) html += '<div class="pf-sec"><b>ยกเลิกรายการฉีดที่บันทึกผิด</b>' + given.map(d => '<div class="pf-row"><span>' + fmtDate(d.date) + ' • ' + escapeHtml(d.vaccineCode) + ' เข็ม ' + d.doseNo + ' • Lot ' + escapeHtml(d.lotNo || '-') + '</span><button class="btn btn-sm btn-danger-outline" data-void="' + d.id + '">ยกเลิก</button></div>').join('') + '</div>';
+  const holder = document.createElement('div'); holder.innerHTML = html;
+  const acts = m.querySelector('.form-actions'); acts.parentNode.insertBefore(holder, acts);
+  const reload = () => { closeModal(); openProfile(s.id); };
+  holder.addEventListener('click', e => {
+    const x = e.target.closest('[data-x]'), v = e.target.closest('[data-void]');
+    if (v) return askForm('ยกเลิกรายการฉีด', [{ id: 'reason', label: 'เหตุผลการยกเลิก (บังคับ)', full: true }], 'ยืนยันยกเลิก', (f) => rpc('voidDose', [v.dataset.void, f.reason], 'ยกเลิกรายการแล้ว', reload));
+    if (!x) return;
+    if (x.dataset.x === 'enroll') { const cs = p.states.length ? p.states : open.map(c => ({ campaignId: c.id, name: c.name })); askForm('ความประสงค์รับวัคซีน', [{ id: 'campaignId', label: 'แคมเปญ', full: true, options: campOpts(cs.map(c => ({ id: c.campaignId, name: c.name }))) }, { id: 'intent', label: 'ความประสงค์', options: [['want', 'ประสงค์รับ'], ['decline', 'ไม่ประสงค์รับ'], ['unsure', 'ยังไม่แน่ใจ'], ['exempt', 'ยกเว้น (มีข้อห้าม)']] }, { id: 'priorDoses', label: 'เคยฉีดมาแล้ว (เข็ม)', type: 'number', value: '0' }, { id: 'priorNote', label: 'หมายเหตุประวัติเดิม', full: true }, { id: 'reason', label: 'เหตุผล (กรณีไม่รับ/ยกเว้น)', full: true }], 'บันทึก', f => rpc('saveEnrollment', [Object.assign(f, { staffId: s.id })], 'บันทึกความประสงค์แล้ว', reload)); }
+    if (x.dataset.x === 'appt') { const st = p.states.filter(z => z.status === 'open' && z.next); if (!st.length) return showToast('ไม่มีเข็มที่ต้องนัดในแคมเปญที่เปิดอยู่', 'warning'); askForm('นัดหมายฉีดเข็มถัดไป', [{ id: 'k', label: 'แคมเปญ / เข็มที่', full: true, options: st.map(z => [z.campaignId + '|' + z.next, z.name + ' — เข็ม ' + z.next]) }, { id: 'plannedDate', label: 'วันที่นัด', type: 'date', value: (st[0].target || todayIso()) }, { id: 'note', label: 'หมายเหตุ' }], 'บันทึกนัด', f => { const k = f.k.split('|'); rpc('saveAppointment', [{ staffId: s.id, campaignId: k[0], doseNo: +k[1], plannedDate: f.plannedDate, note: f.note }], 'บันทึกนัดหมายแล้ว', reload); }); }
+    if (x.dataset.x === 'aefi') askForm('บันทึกอาการหลังฉีด (AEFI)', [{ id: 'date', label: 'วันที่เกิดอาการ', type: 'date', value: todayIso() }, { id: 'severity', label: 'ความรุนแรง', options: [['mild', 'เล็กน้อย'], ['moderate', 'ปานกลาง'], ['severe', 'รุนแรง']] }, { id: 'doseId', label: 'เกี่ยวข้องกับการฉีดครั้งใด', full: true, options: [['', '(ไม่ระบุ)']].concat(given.map(d => [d.id, fmtDate(d.date) + ' ' + d.vaccineCode + ' เข็ม ' + d.doseNo]))}, { id: 'symptom', label: 'อาการ', full: true }, { id: 'action', label: 'การดูแล/การรักษา', full: true }], 'บันทึก', f => rpc('saveAefi', [Object.assign(f, { staffId: s.id })], null, r => { showToast(r.report ? 'บันทึกแล้ว — อาการไม่ใช่ระดับเล็กน้อย ควรรายงานตามระบบ AEFI' : 'บันทึกอาการแล้ว', r.report ? 'warning' : 'success'); reload(); }));
+    if (x.dataset.x === 'merge') { const dup = (STATE.staffCache || []).filter(r => r.id !== s.id && r.name.replace(/\s/g, '') === fullName(s).replace(/\s/g, '')); askForm('รวมกับรายชื่อซ้ำ', [{ id: 'drop', label: 'รายชื่อที่จะถูกลบและรวมประวัติเข้ามาในคนนี้', full: true, options: dup.length ? dup.map(r => [r.id, r.name + ' • ' + (r.dept || '-') + ' • ' + r.cid]) : [['', 'ไม่พบรายชื่อชื่อเหมือนกันในรายการที่โหลดอยู่']] }], 'รวมรายชื่อ', f => { if (!f.drop) return showToast('ไม่มีรายชื่อให้รวม', 'warning'); rpc('mergeStaff', [s.id, f.drop], 'รวมรายชื่อเรียบร้อย', () => { loadStaff(); reload(); }); }); }
+  });
+}
+function openPinModal(force) {
+  const m = openModal('<h3 style="margin-top:0">' + (force ? 'ตั้ง PIN ใหม่ก่อนใช้งาน' : 'เปลี่ยน PIN') + '</h3>' + (force ? '<div class="alert-box warning">คุณกำลังใช้ PIN เริ่มต้น กรุณาเปลี่ยนเพื่อความปลอดภัยของข้อมูลบุคลากร</div>' : '') + '<div class="form-field"><label>PIN เดิม</label><input id="pin-old" type="password" autocomplete="current-password"></div><div class="form-field"><label>PIN ใหม่ (อย่างน้อย 6 ตัว)</label><input id="pin-new" type="password" autocomplete="new-password"></div><div class="form-field"><label>ยืนยัน PIN ใหม่</label><input id="pin-new2" type="password" autocomplete="new-password"></div><div class="form-actions"><button class="btn btn-primary" id="pin-ok">บันทึก PIN</button>' + (force ? '' : '<button class="btn btn-outline" id="pin-cancel">ยกเลิก</button>') + '</div>');
+  if (force) { const c = m.querySelector('#modal-close-btn'); if (c) c.style.display = 'none'; m.onclick = null; }
+  const cc = m.querySelector('#pin-cancel'); if (cc) cc.onclick = closeModal;
+  m.querySelector('#pin-ok').onclick = () => { const a = $('pin-old').value, b = $('pin-new').value; if (b !== $('pin-new2').value) return showToast('PIN ใหม่ทั้งสองช่องไม่ตรงกัน', 'error'); rpc('changeMyPin', [a, b], 'เปลี่ยน PIN เรียบร้อย', () => { STATE.mustPin = false; }); };
+}
+(function () {
+  const foot = document.getElementById('link-logout').parentNode;
+  foot.insertAdjacentHTML('afterbegin', '<a href="#" id="link-pin" data-nav="กำลังเปิดหน้าต่าง..." style="color:rgba(255,255,255,.75);font-size:12px;margin-right:12px">เปลี่ยน PIN</a>');
+  $('link-pin').onclick = e => { e.preventDefault(); openPinModal(false); };
+  const _enter = enterApp; enterApp = function () { _enter(); if (STATE.mustPin) setTimeout(() => openPinModal(true), 400); };
+})();
+/* ===== Loading ทุกครั้งที่กดปุ่ม (วางท้ายสุดเพื่อให้ทำงานหลังตัวจัดการอื่นทั้งหมด) ===== */
+(function () {
+  const SKIP = ".modal-close,#btn-open-sidebar,.topbar-menu-btn,[data-noload]";
+  const NAV = "a[href='#'],[data-nav],.sidebar-nav-item,.bottom-nav-item";
+  document.addEventListener("click", e => {
+    const t = e.target; if (!t || !t.closest) return;
+    const el = t.closest("button,.btn,a[href='#'],[data-nav],.sidebar-nav-item,.bottom-nav-item");
+    if (!el || el.closest("#loadingOverlay") || el.matches(SKIP) || el.disabled || el.classList.contains("btn-busy")) return;
+    if (el.matches(NAV)) { if (pending === 0) flashOverlay(el.getAttribute("data-nav") || "กำลังเปิดหน้า...", LOAD_CFG.navMs); return; }   // เปลี่ยนหน้า/เมนู: overlay สั้น ๆ (ถ้ามีการเรียกเซิร์ฟเวอร์ overlay จะขึ้นเองอยู่แล้ว)
+    btnBusy(el, LOAD_CFG.localMin);                                                                                                       // ปุ่มทั่วไป: วงหมุนบนปุ่มทันที
+    if (LOAD_CFG.overlayForLocalClicks && pending === 0) flashOverlay("กำลังดำเนินการ...", LOAD_CFG.localMin);
+  });
+})();
+</script>
+</body>
+</html>
