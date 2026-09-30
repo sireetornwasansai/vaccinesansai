@@ -744,7 +744,7 @@ body{font-family:'Prompt','Plus Jakarta Sans',sans-serif;font-size:14.5px;line-h
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzDB_dzO6ATGRSxnpc4riLO0wJUDJO_Ui4tr3gMytOGPe1wcdsHcuEFYWyAAW0cz7D7JQ/exec";
 // Google OAuth Client ID (ชนิด Web application) จาก Google Cloud Console — ใส่ค่าเดียวกับ Script Property GOOGLE_CLIENT_ID ใน Apps Script
 // ต้องเพิ่ม Authorized JavaScript origins = https://<โดเมน-vercel-ของคุณ> (ไม่ต้องมี / ท้าย)
-const GOOGLE_CLIENT_ID = "PUT_YOUR_CLIENT_ID.apps.googleusercontent.com";
+let GOOGLE_CLIENT_ID = "PUT_YOUR_CLIENT_ID.apps.googleusercontent.com";   // ปล่อยเป็นค่านี้ได้ — ระบบจะดึง Client ID จาก Script property GOOGLE_CLIENT_ID ใน Apps Script ให้อัตโนมัติ
 const BOOT = {};   // โฮสต์บน Vercel (static) — ไม่มี template ฝั่งเซิร์ฟเวอร์
 let AUTH_TOKEN = "";
 const gs = {
@@ -1097,23 +1097,32 @@ function handleGoogleCredential(resp) {
   gs.run.withSuccessHandler(r => { showLoading("กำลังโหลดข้อมูล..."); afterLogin(r); })
     .withFailureHandler(e => { hideLoading(); $("login-error").textContent = errMsg(e); }).loginGoogle(resp.credential);
 }
-function initGoogleSignIn() {
+let G_INIT = false;
+function gDiag(msg) {   // แสดงสาเหตุใต้ปุ่ม เมื่อเปิดหน้าด้วย ?gdebug=1 (ผู้ใช้ทั่วไปไม่เห็น) และบันทึกลง console เสมอ
+  console.warn("[Google login] " + msg);
+  if (!/[?&]gdebug=1/.test(location.search)) return;
+  let d = $("g-diag"); if (!d) { d = document.createElement("div"); d.id = "g-diag"; d.style.cssText = "margin-top:8px;font-size:12.5px;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:8px 10px;text-align:left"; $("btn-login").insertAdjacentElement("afterend", d); }
+  d.textContent = "Google login: " + msg;
+}
+function initGoogleSignIn(quiet) {
   const native = typeof google !== "undefined" && google.script && google.script.run;
-  if (native) return;                                                     // เสิร์ฟจาก Apps Script → ใช้ปุ่มเดิม
+  if (native || G_INIT) return;                                           // เสิร์ฟจาก Apps Script → ใช้ปุ่มเดิม
   const wrap = $("google-login-wrap");
-  if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.indexOf("PUT_") === 0) { wrap.classList.add("hidden"); return; }
-  $("btn-google-login").style.display = "none";
+  if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.indexOf("PUT_") === 0) { wrap.classList.add("hidden"); if (!quiet) gDiag("ยังไม่มี Client ID — ตั้ง Script property GOOGLE_CLIENT_ID ใน Apps Script (แล้ว Deploy เป็น New version) หรือแก้ค่า GOOGLE_CLIENT_ID ใน index.html"); return; }
+  G_INIT = true; wrap.classList.remove("hidden"); $("btn-google-login").style.display = "none";
   const holder = $("g-btn-holder"); holder.style.display = "flex";
   let tries = 0;
   (function wait() {
     if (window.google && google.accounts && google.accounts.id) {
       google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleGoogleCredential, auto_select: false, cancel_on_tap_outside: true });
       google.accounts.id.renderButton(holder, { type: "standard", theme: "outline", size: "large", shape: "pill", text: "signin_with", locale: "th", width: Math.min(holder.parentElement.clientWidth || 320, 400) });
+      setTimeout(() => { const f = holder.querySelector("iframe,div[role=button]"); if (!f || !f.offsetHeight) { holder.style.display = "none"; wrap.classList.add("hidden"); gDiag("ปุ่มไม่แสดง — มักเกิดจาก Authorized JavaScript origins ใน Google Cloud ไม่ตรงกับ " + location.origin + " (ต้องตรงทุกตัวอักษร ไม่มี / ท้าย)"); } }, 3500);
     } else if (++tries < 50) setTimeout(wait, 200);
-    else { holder.style.display = "none"; wrap.classList.add("hidden"); }
+    else { holder.style.display = "none"; wrap.classList.add("hidden"); gDiag("โหลดสคริปต์ Google (accounts.google.com/gsi/client) ไม่สำเร็จ — ตรวจเครือข่าย/AdBlock/ส่วนขยายที่บล็อก"); }
   })();
 }
-initGoogleSignIn();
+function googleFromSettings(pub) { if (pub && pub.GOOGLE_CLIENT_ID && (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.indexOf("PUT_") === 0)) GOOGLE_CLIENT_ID = pub.GOOGLE_CLIENT_ID; initGoogleSignIn(false); }
+initGoogleSignIn(true);
 $("login-pin").addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
 $("link-self-register").onclick = e => { e.preventDefault(); showSelfPage(); };
 $("link-back-login").onclick = e => { e.preventDefault(); $("page-self").classList.add("hidden"); $("page-landing").classList.remove("hidden"); };
@@ -1127,7 +1136,7 @@ $("topbar-campaign").addEventListener("change", e => { STATE.campaignId = e.targ
   let tok = "", user = null;
   try { tok = sessionStorage.getItem("vr_token") || ""; user = JSON.parse(sessionStorage.getItem("vr_user") || "null"); } catch (_) {}
   if (WEB_APP_URL.indexOf("PUT_") === 0) { showToast("ยังไม่ได้ตั้งค่า WEB_APP_URL — ดูคำแนะนำในไฟล์ Code.gs", "warning"); }
-  gs.run.withSuccessHandler(applyTheme).getPublicSettings();
+  gs.run.withSuccessHandler(pub => { applyTheme(pub); googleFromSettings(pub); }).withFailureHandler(() => gDiag("โหลดการตั้งค่าจาก Apps Script ไม่สำเร็จ (ตรวจ WEB_APP_URL / การ Deploy)")).getPublicSettings();
   if (BOOT && BOOT.login) { showLoading("กำลังโหลดข้อมูล..."); afterLogin(BOOT.login); return; }   // เพิ่งกลับมาจากหน้าล็อกอิน Google
   if (BOOT && BOOT.error && !(tok && user)) $("login-error").textContent = BOOT.error;
   if (tok && user) { AUTH_TOKEN = tok; STATE.user = user; if (user.role === "staff") resetToLogin(""); else enterApp(); }
