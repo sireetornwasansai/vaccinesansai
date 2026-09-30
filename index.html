@@ -102,9 +102,6 @@ table.data-table{width:100%;border-collapse:collapse;font-size:13px;min-width:56
 .badge-neutral{background:rgba(107,114,128,.12);color:#6B7280}
 .badge-info{background:rgba(11,95,186,.10);color:var(--primary)}
 .empty-state{text-align:center;padding:34px 12px;color:var(--muted)}
-#app-progress{position:fixed;inset:0 0 auto 0;height:3px;z-index:1200;pointer-events:none;overflow:hidden;opacity:0;transition:opacity .2s}
-#app-progress.active{opacity:1}
-#app-progress::before{content:"";position:absolute;inset:0;width:40%;background:var(--primary);animation:appProgressSlide 1.1s ease-in-out infinite}
 .skeleton{position:relative;overflow:hidden;background:var(--border);border-radius:8px;display:block;height:14px}
 .skeleton::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);transform:translateX(-100%);animation:skShimmer 1.3s infinite}
 #toast-container{position:fixed;z-index:1600;left:50%;transform:translateX(-50%);bottom:calc(22px + var(--safe-bottom));display:flex;flex-direction:column;gap:8px;align-items:center;width:100%;max-width:420px;padding:0 calc(16px + var(--safe-right)) 0 calc(16px + var(--safe-left));pointer-events:none}
@@ -144,7 +141,6 @@ table.data-table{width:100%;border-collapse:collapse;font-size:13px;min-width:56
 .color-row input[type=color]{width:44px;height:38px;border:1px solid var(--border);border-radius:8px;padding:2px;background:none}
 @keyframes sectionFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-@keyframes appProgressSlide{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
 @keyframes skShimmer{to{transform:translateX(100%)}}
 @keyframes cardRiseIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 .page-section.active .card,.page-section.active .stat-card{animation:cardRiseIn .35s cubic-bezier(.16,.84,.44,1) both;animation-delay:calc(var(--reveal-i,0) * 40ms)}
@@ -246,20 +242,43 @@ body{font-family:'Prompt','Plus Jakarta Sans',sans-serif;font-size:14.5px;line-h
 @keyframes btnSpin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){
   .loading-overlay .ld-ring.r1{animation:ldSpin 2.4s linear infinite!important}
-  .loading-overlay .ld-bar span{animation:ldBar 2s ease-in-out infinite!important}
-}
-
-/* ---------- ปุ่มกำลังทำงาน (แสดงทุกครั้งที่กดปุ่ม) ---------- */
-.btn-google{--spin:#4285F4}
-.btn-primary,.btn-danger,.btn-portal{--spin:#fff}
-.btn-danger-outline{--spin:var(--danger)}
 .btn-busy{position:relative;pointer-events:none;cursor:progress;color:transparent;text-shadow:none}
 .btn-busy>*,.btn-busy .material-icons-outlined{visibility:hidden}
 .btn-busy:disabled{opacity:1!important}
 .btn-busy::after{content:"";position:absolute;left:50%;top:50%;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;border:2.5px solid var(--spin,var(--primary));border-right-color:transparent;animation:btnSpin .7s linear infinite}
 .tabs button.btn-busy::after,.seg button.btn-busy::after,.tab-btn.btn-busy::after{position:static;display:inline-block;vertical-align:middle;margin:0 0 0 8px;width:12px;height:12px;border-width:2px}
 .tabs button.btn-busy>*,.seg button.btn-busy>*,.tab-btn.btn-busy>*{visibility:visible}
+.btn-google{--spin:#4285F4}
+/* ---------- LINE notify ---------- */
+.switch{position:relative;display:inline-flex;align-items:center;gap:10px;cursor:pointer;user-select:none;font-weight:600}
+.switch input{position:absolute;opacity:0;width:0;height:0}
+.switch .sw-track{width:50px;height:28px;border-radius:999px;background:#cbd5e1;position:relative;transition:background .2s;flex:none}
+.switch .sw-track::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .2s}
+.switch input:checked+.sw-track{background:#06C755}
+.switch input:checked+.sw-track::after{transform:translateX(22px)}
+.switch input:focus-visible+.sw-track{outline:3px solid rgba(6,199,85,.35);outline-offset:2px}
+.switch input:disabled+.sw-track{opacity:.5}
+.line-days{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 12px}
+.line-days label{display:flex;align-items:center;gap:6px;border:1.5px solid var(--border);border-radius:999px;padding:8px 14px;cursor:pointer;font-size:13.5px;user-select:none}
+.line-days label:has(input:checked){border-color:#06C755;background:rgba(6,199,85,.1);font-weight:600}
+.line-days input{accent-color:#06C755}
+.btn-line{background:#06C755;color:#fff;border:0}.btn-line:hover{background:#05b34c}.btn-line:disabled{opacity:.5;cursor:not-allowed}
+/* ---------- Loading skeleton (แท็บ/หน้า) ---------- */
+.page-skel{display:none}
+.sk-loading>*:not(.page-skel){display:none!important}
+.sk-loading>.page-skel{display:block}
+.page-skel .sk-h{height:22px;width:38%;margin-bottom:16px}
+.page-skel .sk-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+.page-skel .sk-card{height:78px;border-radius:14px}
+.page-skel .sk-line{height:14px;margin-bottom:12px}
+.page-skel .sk-block{height:180px;border-radius:14px}
+  .loading-overlay .ld-bar span{animation:ldBar 2s ease-in-out infinite!important}
+}
 
+/* ---------- ปุ่มกำลังทำงาน (แสดงทุกครั้งที่กดปุ่ม) ---------- */
+.btn-primary,.btn-danger,.btn-portal{--spin:#fff}
+.btn-danger-outline{--spin:var(--danger)}
+.tabs button.tabs button
 /* ---------- หน้าล็อกอิน: ปุ่ม Google (มาตรฐานสากล) / ตัวคั่น / ปุ่มบุคลากร ---------- */
 .or-divider{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:12px;margin:2px 0 12px}
 .or-divider::before,.or-divider::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border) 30%,var(--border) 70%,transparent)}
@@ -298,7 +317,6 @@ body{font-family:'Prompt','Plus Jakarta Sans',sans-serif;font-size:14.5px;line-h
 </style>
 </head>
 <body>
-<div id="app-progress"></div>
 
 <!-- ===== หน้าเข้าสู่ระบบ (เจ้าหน้าที่/ผู้ดูแล) ===== -->
 <div id="page-landing" class="landing-wrap">
@@ -517,7 +535,7 @@ body{font-family:'Prompt','Plus Jakarta Sans',sans-serif;font-size:14.5px;line-h
       <!-- FOLLOW-UP -->
       <section class="page-section" id="section-followup">
         <div class="section-header"><h2>ติดตาม/นัดหมาย</h2></div>
-        <div class="tabs"><button class="tab-btn active" data-tab="fu-due">รายชื่อค้างรับ</button><button class="tab-btn" data-tab="fu-his">รอตรวจสอบ HIS</button><button class="tab-btn" data-tab="fu-titer">ตรวจภูมิคุ้มกัน (Anti-HBs)</button><button class="tab-btn" data-tab="fu-plan">ผู้ช่วยวางแผนจัดสรร</button></div>
+        <div class="tabs"><button class="tab-btn active" data-tab="fu-due">รายชื่อค้างรับ</button><button class="tab-btn" data-tab="fu-his">รอตรวจสอบ HIS</button><button class="tab-btn" data-tab="fu-titer">ตรวจภูมิคุ้มกัน (Anti-HBs)</button><button class="tab-btn" data-tab="fu-plan">ผู้ช่วยวางแผนจัดสรร</button><button class="tab-btn" data-tab="fu-line">แจ้งเตือน LINE</button></div>
         <div class="tabpane active" id="tab-fu-due">
           <div class="card">
             <div class="form-grid" style="margin-bottom:0">
@@ -537,6 +555,61 @@ body{font-family:'Prompt','Plus Jakarta Sans',sans-serif;font-size:14.5px;line-h
         <div class="tabpane" id="tab-fu-plan">
           <div class="form-field" style="max-width:320px"><label>แคมเปญ</label><select id="plan-campaign"></select></div>
           <div id="plan-result"></div>
+        </div>
+        <div class="tabpane" id="tab-fu-line">
+          <div class="card">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+              <label class="switch"><input type="checkbox" id="line-enabled"><span class="sw-track"></span><span id="line-enabled-text">แจ้งเตือน LINE: ปิด</span></label>
+              <div id="line-status" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+            </div>
+            <div id="line-warn" style="margin-top:10px"></div>
+            <div id="line-admin">
+              <hr style="border:0;border-top:1px solid var(--border);margin:14px 0">
+              <details open><summary><b>1) วันเปิดให้บริการของหน่วย</b> <span class="card-sub" style="display:inline">(ส่งแจ้งเตือนได้เฉพาะวันเหล่านี้)</span></summary>
+                <div class="line-days" id="line-days">
+                  <label><input type="checkbox" value="1"> จันทร์</label><label><input type="checkbox" value="2"> อังคาร</label><label><input type="checkbox" value="3"> พุธ</label><label><input type="checkbox" value="4"> พฤหัสฯ</label><label><input type="checkbox" value="5"> ศุกร์</label><label><input type="checkbox" value="6"> เสาร์</label><label><input type="checkbox" value="0"> อาทิตย์</label>
+                </div>
+                <div class="form-grid">
+                  <div class="form-field"><label>เวลาให้บริการ (แสดงในข้อความ)</label><input id="line-time" placeholder="เช่น 08.30–11.30 น."></div>
+                  <div class="form-field"><label>สถานที่ฉีด (แสดงในข้อความ)</label><input id="line-place" placeholder="เช่น ห้องฉีดวัคซีน อาคาร OPD ชั้น 1"></div>
+                  <div class="form-field full"><label>วันหยุดพิเศษ / ปิดให้บริการ (ค.ศ. YYYY-MM-DD คั่นด้วย , )</label><input id="line-closed" placeholder="เช่น 2026-10-13, 2026-12-31"></div>
+                </div>
+              </details>
+              <details style="margin-top:10px" open><summary><b>2) รอบและเวลาส่งอัตโนมัติ</b></summary>
+                <div class="form-grid" style="margin-top:8px">
+                  <div class="form-field"><label>รอบที่ส่ง (ส่งเฉพาะวันทำการเท่านั้น)</label><select id="line-remind"><option value="same">วันนัด (เช้าวันที่มาฉีด)</option><option value="next">ล่วงหน้า 1 รอบทำการ (ส่งวันทำการก่อนหน้า)</option><option value="both">ทั้งสองรอบ</option></select></div>
+                  <div class="form-field"><label>เวลาส่งอัตโนมัติ (ชั่วโมง 0–23)</label><input id="line-hour" type="number" min="0" max="23" inputmode="numeric"></div>
+                  <div class="form-field full"><label>LINE ID ผู้รับสรุปผลการส่ง (ไม่บังคับ — ส่งเฉพาะจำนวน ไม่มีชื่อบุคคล)</label><input id="line-report" placeholder="U… หรือ C…" autocomplete="off"></div>
+                </div>
+              </details>
+              <details style="margin-top:10px"><summary><b>3) ข้อความแจ้งเตือน</b> <span class="card-sub" style="display:inline">แยกตามเข็ม + ข้อควรทราบรายวัคซีน</span></summary>
+                <div class="card-sub" style="margin:6px 0">ตัวแปร: {name} {vaccine} {dose} {date} {time} {place} {org} {dept} {note} • บรรทัดที่ตัวแปรว่างจะถูกตัดออกอัตโนมัติ • ห้ามใส่เลขบัตร ผลตรวจ หรือโรคประจำตัวในข้อความ (PDPA)</div>
+                <div class="form-grid">
+                  <div class="form-field full"><label>เข็มที่ 1</label><textarea id="line-m1" rows="9" maxlength="1000" style="width:100%"></textarea></div>
+                  <div class="form-field full"><label>เข็มที่ 2</label><textarea id="line-m2" rows="7" maxlength="1000" style="width:100%"></textarea></div>
+                  <div class="form-field full"><label>เข็มที่ 3 ขึ้นไป</label><textarea id="line-m3" rows="6" maxlength="1000" style="width:100%"></textarea></div>
+                </div>
+                <b style="font-size:13.5px">ข้อควรทราบรายวัคซีน ({note})</b><div id="line-notes" class="form-grid" style="margin-top:6px"></div>
+                <div class="form-actions"><button class="btn btn-outline" id="btn-line-preview-msg" type="button"><span class="material-icons-outlined">visibility</span> ดูตัวอย่างข้อความ</button></div>
+                <pre id="line-msg-preview" class="hidden" style="white-space:pre-wrap;background:#e9f7ee;border:1px solid #b7e4c7;border-radius:12px;padding:12px;font-family:inherit;font-size:13.5px;margin:8px 0 0"></pre>
+              </details>
+              <div class="form-actions"><button class="btn btn-secondary" id="btn-line-save">บันทึกการตั้งค่า</button></div>
+              <div class="card-sub">Channel access token ตั้งใน Apps Script (Script properties: LINE_CHANNEL_ACCESS_TOKEN) ไม่เก็บในหน้าเว็บ • ส่งอัตโนมัติรายวัน: รัน installLineTrigger ใน Apps Script ครั้งเดียว</div>
+            </div>
+          </div>
+          <div class="card" style="margin-top:14px">
+            <div class="form-grid" style="margin-bottom:8px">
+              <div class="form-field"><label>แคมเปญ</label><select id="line-campaign"></select></div>
+              <div class="form-field"><label>วันที่นัด</label><input type="date" id="line-date"></div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"><button class="btn btn-sm btn-outline" id="btn-line-today" type="button">วันทำการนี้/ถัดไป</button><button class="btn btn-sm btn-outline" id="btn-line-next" type="button">รอบทำการถัดไป</button><button class="btn btn-sm btn-outline" id="btn-line-export" type="button"><span class="material-icons-outlined" style="font-size:16px;vertical-align:-3px">download</span> ส่งออกรายชื่อวันฉีด (Excel)</button></div>
+            <div id="line-summary" style="margin-bottom:10px"></div>
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>ชื่อ-สกุล</th><th>หน่วยงาน</th><th>เข็มที่</th><th>ที่มา</th><th>LINE</th><th>สถานะ</th><th></th></tr></thead><tbody id="line-body"></tbody></table></div>
+            <div class="form-actions" style="margin-top:12px"><button class="btn btn-line" id="btn-line-send-all"><span class="material-icons-outlined">send</span> ส่งแจ้งเตือนทั้งหมดที่ยังไม่ได้ส่ง</button></div>
+          </div>
+          <div class="card" style="margin-top:14px"><b>ประวัติการส่งล่าสุด</b>
+            <div class="table-wrap" style="margin-top:8px"><table class="data-table"><thead><tr><th>เวลา</th><th>ชื่อ-สกุล</th><th>เข็ม</th><th>นัดวันที่</th><th>ผล</th><th>รายละเอียด</th></tr></thead><tbody id="line-log"></tbody></table></div>
+          </div>
         </div>
       </section>
 
@@ -561,8 +634,35 @@ body{font-family:'Prompt','Plus Jakarta Sans',sans-serif;font-size:14.5px;line-h
 
       <!-- IMPORT -->
       <section class="page-section" id="section-import">
-        <div class="section-header"><h2>นำเข้าข้อมูลจากไฟล์ Excel เดิม</h2></div>
+        <div class="section-header"><h2>นำเข้าข้อมูล</h2></div>
         <div class="alert-box info">รองรับไฟล์ชีตเดิม 4 รูปแบบ: MR (ปีงบ 2568), ไข้หวัดใหญ่ (ปีงบ 2569), HB (ปีงบ 2568), HB (ปีงบ 2569) — ระบบจะจับคู่บุคลากรด้วยเลขบัตร/ชื่อ และรวมกับข้อมูลเดิมอัตโนมัติ ไม่สร้างรายการซ้ำ</div>
+        <div class="card" id="fs-card">
+          <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center"><b style="font-size:16px">เชื่อม Google Sheet จากแบบฟอร์มลงทะเบียน (Google Form)</b><span id="fs-last" class="card-sub"></span></div>
+          <div class="alert-box info" style="margin-top:10px"><span class="material-icons-outlined">share</span><div>เปิดชีตที่เก็บ "คำตอบ" ของ Google Form แล้วกด <b>แชร์</b> ให้บัญชี <b id="fs-owner">เจ้าของ Apps Script</b> (สิทธิ์ผู้ดูก็พอ) จากนั้นวางลิงก์ด้านล่าง ระบบจะจับคู่คอลัมน์ให้เอง ตรวจก่อนนำเข้า และซิงก์ซ้ำได้โดยไม่สร้างรายการซ้ำ (ผู้ส่งซ้ำใช้คำตอบล่าสุด)</div></div>
+          <div class="form-grid" style="margin-top:10px"><div class="form-field full"><label>ลิงก์ Google Sheet ที่เก็บคำตอบ</label><input id="fs-url" placeholder="https://docs.google.com/spreadsheets/d/…" autocomplete="off" spellcheck="false"></div></div>
+          <div class="form-actions"><button class="btn btn-secondary" id="btn-fs-inspect" type="button"><span class="material-icons-outlined">table_view</span> ตรวจสอบชีต</button></div>
+          <div id="fs-config" class="hidden">
+            <div class="alert-box success" id="fs-found" style="margin:10px 0"></div>
+            <div class="form-grid">
+              <div class="form-field"><label>แท็บ (Sheet) ที่เก็บคำตอบ</label><select id="fs-tab"></select></div>
+              <div class="form-field"><label>ลงทะเบียนเข้าแคมเปญ</label><select id="fs-camp"></select></div>
+              <div class="form-field"><label>ถ้าฟอร์มไม่มีคอลัมน์ความประสงค์</label><select id="fs-defintent"><option value="want">ถือว่าประสงค์รับวัคซีน</option><option value="unsure">ถือว่ายังไม่ตัดสินใจ</option></select></div>
+            </div>
+            <b style="font-size:13.5px">จับคู่คอลัมน์ในชีต (ระบบเลือกให้อัตโนมัติ — ปรับได้)</b>
+            <div id="fs-map" class="form-grid" style="margin-top:6px"></div>
+            <div class="form-actions"><button class="btn btn-secondary" id="btn-fs-preview" type="button"><span class="material-icons-outlined">fact_check</span> ตรวจก่อนนำเข้า</button><button class="btn btn-primary" id="btn-fs-run" type="button" disabled><span class="material-icons-outlined">sync</span> นำเข้า / ซิงก์เดี๋ยวนี้</button></div>
+            <hr style="border:0;border-top:1px solid var(--border);margin:14px 0">
+            <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+              <label class="switch"><input type="checkbox" id="fs-auto"><span class="sw-track"></span><span id="fs-auto-text">ซิงก์อัตโนมัติ: ปิด</span></label>
+              <select id="fs-interval" style="max-width:180px"><option value="1">ทุก 1 ชั่วโมง</option><option value="2">ทุก 2 ชั่วโมง</option><option value="4">ทุก 4 ชั่วโมง</option><option value="6">ทุก 6 ชั่วโมง</option><option value="12">ทุก 12 ชั่วโมง</option></select>
+              <button class="btn btn-sm btn-outline" id="btn-fs-save" type="button">บันทึกการเชื่อมต่อ</button>
+            </div>
+            <div class="card-sub" style="margin-top:6px">ซิงก์อัตโนมัติ: บันทึกการเชื่อมต่อ แล้วรัน <b>installFormSyncTrigger</b> ใน Apps Script ครั้งเดียว (เปลี่ยนช่วงเวลาแล้วรันซ้ำ) • ถ้าฟอร์มมีช่อง LINE User ID ค่านั้นจะถูกใช้กับการแจ้งเตือน LINE ด้วย</div>
+          </div>
+          <div id="fs-summary" style="margin-top:12px"></div>
+          <div id="fs-issues" style="max-height:300px;overflow-y:auto;margin-top:10px"></div>
+        </div>
+        <div class="section-header" style="margin-top:22px"><h3 style="margin:0">นำเข้าจากไฟล์ Excel เดิม</h3></div>
         <div class="card">
           <div class="form-field" style="max-width:320px"><label>รูปแบบไฟล์ต้นทาง</label>
             <select id="imp-kind"><option value="mr68">MR บุคลากร ปีงบ 2568</option><option value="flu69">ไข้หวัดใหญ่ บุคลากร ปีงบ 2569</option><option value="hb68">HB บุคลากร ปีงบ 2568</option><option value="hb69">HB บุคลากร ปีงบ 2569</option></select>
@@ -644,7 +744,7 @@ body{font-family:'Prompt','Plus Jakarta Sans',sans-serif;font-size:14.5px;line-h
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzDB_dzO6ATGRSxnpc4riLO0wJUDJO_Ui4tr3gMytOGPe1wcdsHcuEFYWyAAW0cz7D7JQ/exec";
 // Google OAuth Client ID (ชนิด Web application) จาก Google Cloud Console — ใส่ค่าเดียวกับ Script Property GOOGLE_CLIENT_ID ใน Apps Script
 // ต้องเพิ่ม Authorized JavaScript origins = https://<โดเมน-vercel-ของคุณ> (ไม่ต้องมี / ท้าย)
-const GOOGLE_CLIENT_ID = "1021974140392-fg6al0u5qanf7iqjm7k0reqrehm3kqcd.apps.googleusercontent.com";
+const GOOGLE_CLIENT_ID = "PUT_YOUR_CLIENT_ID.apps.googleusercontent.com";
 const BOOT = {};   // โฮสต์บน Vercel (static) — ไม่มี template ฝั่งเซิร์ฟเวอร์
 let AUTH_TOKEN = "";
 const gs = {
@@ -682,57 +782,55 @@ function errMsg(e) { return (e && e.message) || String(e); }
 function fmtDate(iso) { if (!iso) return "-"; const p = iso.split("-"); return p.length === 3 ? (+p[2]) + "/" + (+p[1]) + "/" + (+p[0] + 543) : iso; }
 function fmtDateShort(iso) { return fmtDate(iso); }
 
-/* ---------- ระบบ Loading กลาง ----------
-   • ทุกการเรียกเซิร์ฟเวอร์ (gs.run) แสดง overlay อัตโนมัติ (หน่วง 140ms กันกะพริบ, แสดงอย่างน้อย 600ms กันวูบ)
-   • ทุกปุ่มที่กด: ปุ่มขึ้นวงหมุนทันที (≥450ms) — ลิงก์/เมนูเปลี่ยนหน้าขึ้น overlay สั้น ๆ
-   • ปรับค่าได้ที่ LOAD_CFG (overlayForLocalClicks=true → ปุ่มที่ไม่เรียกเซิร์ฟเวอร์ก็ขึ้น overlay เต็มจอด้วย) */
-const LOAD_CFG = { grace: 140, minShow: 600, hideDelay: 180, localMin: 450, navMs: 650, watchdog: 45000, overlayForLocalClicks: false };
-const RPC_TEXT = {
-  login: "กำลังเข้าสู่ระบบ", loginGoogle: "กำลังเข้าสู่ระบบด้วย Google", staffLogin: "กำลังเข้าสู่ระบบ", staffRegister: "กำลังตรวจสอบและสร้างบัญชี",
-  myHistory: "กำลังโหลดประวัติวัคซีน", searchMyRecord: "กำลังค้นหาและเชื่อมประวัติ", lookupHistory: "กำลังค้นหาประวัติวัคซีน", selfRegister: "กำลังส่งข้อมูลลงทะเบียน",
-  getDashboard: "กำลังสรุปภาพรวม", listStaff: "กำลังโหลดทะเบียนบุคลากร", getProfile: "กำลังเปิดข้อมูลบุคลากร", recordDose: "กำลังบันทึกการฉีดวัคซีน",
-  recordSession: "กำลังบันทึกการฉีดวัคซีน", checkDose: "กำลังตรวจสอบเงื่อนไขการฉีด", importPreview: "กำลังตรวจสอบไฟล์", importCommit: "กำลังนำเข้าข้อมูล",
-  changeStaffPassword: "กำลังเปลี่ยนรหัสผ่าน", changeMyPin: "กำลังเปลี่ยน PIN", getAudit: "กำลังโหลดบันทึกการใช้งาน"
-};
-function rpcText(n) {
-  if (RPC_TEXT[n]) return RPC_TEXT[n];
-  if (/^(save|record|add|void|merge|set|mark|clone|change|import)/.test(n)) return "กำลังบันทึกข้อมูล";
-  if (/^(list|get|load)/.test(n)) return "กำลังโหลดข้อมูล";
-  return "กำลังประมวลผล";
-}
-let pending = 0, pendingAll = 0, manualText = null, lastRpcText = "กำลังโหลดข้อมูล", flashActive = false, flashT = null;
-let ovShown = false, ovShownAt = 0, ovShowT = null, ovHideT = null, ovWatchT = null;
-const ovWanted = () => pending > 0 || manualText !== null;
+/* ---------- Loading ----------
+   • ล็อกอิน / หน้าก่อนเข้าระบบ: ใช้ overlay + icon loading แบบเดิม (showLoading/hideLoading) และวงหมุนบนปุ่มล็อกอิน
+   • เปลี่ยนแท็บ/หน้าภายในระบบ: ใช้ skeleton (ไม่มี overlay เต็มจอ ไม่มีวงหมุนบนปุ่มอื่น) */
+const LOAD_CFG = { grace: 140, minShow: 600, hideDelay: 180, localMin: 450, watchdog: 45000 };
+const SPIN_BTNS = { "btn-login": 1, "btn-google-login": 1, "btn-sv-find": 1 };   // ปุ่มที่ให้มีวงหมุน (ล็อกอิน/ค้นหาก่อนเข้าระบบ)
+let pending = 0, pendingAll = 0, skelEl = null, skelT = null;
+let manualText = null, ovShown = false, ovShownAt = 0, ovShowT = null, ovHideT = null, ovWatchT = null;
 const ovClean = t => String(t || "").replace(/[.\u2026\s]+$/, "") || "กำลังโหลดข้อมูล";
 function ovShow(o) {
   if (ovShown) return;
   o.classList.add("show"); ovShown = true; ovShownAt = Date.now();
-  clearTimeout(ovWatchT); ovWatchT = setTimeout(() => { pending = 0; pendingAll = 0; manualText = null; flashActive = false; ovSync(); }, LOAD_CFG.watchdog);   // กันค้างกรณีเครือข่ายมีปัญหา
+  clearTimeout(ovWatchT); ovWatchT = setTimeout(() => { manualText = null; ovSync(); }, LOAD_CFG.watchdog);   // กันค้างกรณีเครือข่ายมีปัญหา
 }
 function ovSync(immediate) {
   const o = $("loadingOverlay"); if (!o) return;
-  $("app-progress").classList.toggle("active", pendingAll > 0);
-  if (ovWanted()) {
+  if (manualText !== null) {
     clearTimeout(ovHideT); ovHideT = null;
-    const t = $("ld-text-main"); if (t) t.textContent = ovClean(manualText !== null ? manualText : lastRpcText);
+    const t = $("ld-text-main"); if (t) t.textContent = ovClean(manualText);
     if (ovShown) return;
     if (immediate) { clearTimeout(ovShowT); ovShowT = null; ovShow(o); }
-    else if (!ovShowT) ovShowT = setTimeout(() => { ovShowT = null; if (ovWanted()) ovShow(o); }, LOAD_CFG.grace);
+    else if (!ovShowT) ovShowT = setTimeout(() => { ovShowT = null; if (manualText !== null) ovShow(o); }, LOAD_CFG.grace);
   } else {
     clearTimeout(ovShowT); ovShowT = null;
     if (!ovShown || ovHideT) return;
     const wait = Math.max(LOAD_CFG.hideDelay, LOAD_CFG.minShow - (Date.now() - ovShownAt));
-    ovHideT = setTimeout(() => { ovHideT = null; if (ovWanted()) return; o.classList.remove("show"); ovShown = false; clearTimeout(ovWatchT); }, wait);
+    ovHideT = setTimeout(() => { ovHideT = null; if (manualText !== null) return; o.classList.remove("show"); ovShown = false; clearTimeout(ovWatchT); }, wait);
   }
 }
-function showLoading(text) { flashActive = false; manualText = text || "กำลังโหลดข้อมูล..."; ovSync(true); }
-function hideLoading() { flashActive = false; manualText = null; ovSync(); }
-function flashOverlay(text, ms) { showLoading(text); flashActive = true; clearTimeout(flashT); flashT = setTimeout(() => { if (flashActive) hideLoading(); }, ms || LOAD_CFG.navMs); }
-function rpcBegin(name, quiet) { const t = { quiet: !!quiet, done: false }; pendingAll++; if (!quiet) { pending++; lastRpcText = rpcText(name); } ovSync(); return t; }
+function showLoading(text) { manualText = text || "กำลังโหลดข้อมูล..."; ovSync(true); }
+function hideLoading() { manualText = null; ovSync(); }
+function flashOverlay() {}
+/* skeleton ตอนเปลี่ยนแท็บ/หน้า */
+function skelHtml(kind) {
+  const line = '<span class="skeleton sk-line"></span>';
+  return '<div class="page-skel" aria-hidden="true"><span class="skeleton sk-h"></span>'
+    + (kind === "dash" ? '<div class="sk-row">' + '<span class="skeleton sk-card"></span>'.repeat(4) + '</div>' : '')
+    + line + line.replace('sk-line', 'sk-line" style="width:82%') + '<span class="skeleton sk-block"></span></div>';
+}
+function skelStart(sec) {
+  if (!sec || pending === 0) return;                       // ไม่มีการโหลดจากเซิร์ฟเวอร์ → ไม่ต้องแสดง skeleton
+  if (!sec.querySelector(":scope>.page-skel")) sec.insertAdjacentHTML("beforeend", skelHtml(sec.id === "section-dashboard" ? "dash" : ""));
+  skelStop(); skelEl = sec; sec.classList.add("sk-loading");
+  skelT = setTimeout(skelStop, LOAD_CFG.watchdog);
+}
+function skelStop() { clearTimeout(skelT); skelT = null; if (skelEl) { skelEl.classList.remove("sk-loading"); skelEl = null; } }
+function rpcBegin(name, quiet) { const t = { quiet: !!quiet, done: false }; pendingAll++; if (!quiet) pending++; return t; }
 function rpcEnd(t) {
   if (t.done) return; t.done = true; pendingAll = Math.max(0, pendingAll - 1);
-  if (!t.quiet) { pending = Math.max(0, pending - 1); if (!pending && !flashActive) manualText = null; }
-  ovSync();
+  if (!t.quiet) { pending = Math.max(0, pending - 1); if (!pending) { skelStop(); if (manualText !== null) { manualText = null; ovSync(); } } }
 }
 /* beginBusy/endBusy/busy เดิมยังเรียกใช้ได้ แต่การนับทำที่ gs.run อัตโนมัติแล้ว จึงเป็น no-op เพื่อไม่ให้นับซ้ำ */
 const beginBusy = () => {};
@@ -749,8 +847,9 @@ function btnBusy(b, ms) {
   b._minUntil = Math.max(b._minUntil || 0, Date.now() + ms); b.classList.add("btn-busy"); clearTimeout(b._bt);
   b._bt = setTimeout(() => { if (!b._hold) b.classList.remove("btn-busy"); }, ms);
 }
-function setBtnLoading(btn, on, label) {
+function setBtnLoading(btn, on) {
   if (!btn) return;
+  if (!SPIN_BTNS[btn.id]) { btn.disabled = !!on; return; }   // ปุ่มอื่น: แค่ปิดปุ่มระหว่างรอ ไม่มีวงหมุน
   if (on) { btn._hold = true; btn.disabled = true; btnBusy(btn, LOAD_CFG.localMin); return; }
   btn._hold = false; btn.disabled = false;
   const rest = (btn._minUntil || 0) - Date.now(); clearTimeout(btn._bt);
@@ -801,7 +900,7 @@ function afterLogin(r) {
   enterApp();
 }
 function doGoogleLogin() {
-  if (BOOT && BOOT.googleAuthUrl) { showLoading("กำลังไปยัง Google..."); window.open(BOOT.googleAuthUrl, "_top"); return; }   // ล็อกอินด้วยบัญชี Google ทั่วไป
+  if (BOOT && BOOT.googleAuthUrl) { window.open(BOOT.googleAuthUrl, "_top"); return; }   // ล็อกอินด้วยบัญชี Google ทั่วไป
   if (BOOT && BOOT.googleAuthNote) { $("login-error").textContent = BOOT.googleAuthNote + " — ลองรีเฟรชหน้าแล้วกดใหม่"; return; }
   const btn = $("btn-google-login"); setBtnLoading(btn, true); $("login-error").textContent = ""; showLoading("กำลังเข้าสู่ระบบ...");
   gs.run.withSuccessHandler(r => { setBtnLoading(btn, false); showLoading("กำลังโหลดข้อมูล..."); afterLogin(r); })
@@ -818,7 +917,7 @@ function doLogin() {
 function resetToLogin(msg) {
   AUTH_TOKEN = ""; STATE.user = null; STATE.mustPin = false; STATE.campaignId = ""; STATE.staffCache = []; STATE.recStaff = null; STATE.lotsCache = []; STATE.issuesCache = []; STATE.bundleReady = false;
   try { sessionStorage.removeItem("vr_token"); sessionStorage.removeItem("vr_user"); } catch (_) {}
-  pending = 0; pendingAll = 0; flashActive = false; $("app-progress").classList.remove("active"); hideLoading();
+  pending = 0; pendingAll = 0; skelStop(); hideLoading();
   try { closeModal(); } catch (_) {} try { closeSidebar(); } catch (_) {}
   $("toast-container").innerHTML = "";
   document.querySelectorAll("#page-app tbody").forEach(t => { t.innerHTML = ""; });   // ล้างข้อมูลที่ค้างบนจอ ไม่ให้ผู้ใช้คนถัดไปเห็น
@@ -943,8 +1042,8 @@ function goToPage(key) {
   document.querySelectorAll(".sidebar-nav-item").forEach(i => i.classList.toggle("active", i.dataset.page === key));
   $("topbar-title").textContent = TITLES[key] || "";
   closeSidebar();
-  const loaders = { dashboard: loadDashboard, staff: loadStaff, record: initRecordPage, followup: loadFollowup, stock: loadStock, campaigns: loadCampaigns, quality: loadQuality, import: null, settings: loadSettingsPage };
-  if (loaders[key]) loaders[key]();
+  const loaders = { dashboard: loadDashboard, staff: loadStaff, record: initRecordPage, followup: loadFollowup, stock: loadStock, campaigns: loadCampaigns, quality: loadQuality, import: loadFormSync, settings: loadSettingsPage };
+  if (loaders[key]) { loaders[key](); skelStart(sec); }
 }
 function closeSidebar() { $("sidebar").classList.remove("open"); $("sidebar-backdrop").classList.remove("open"); }
 
@@ -982,6 +1081,8 @@ document.addEventListener("click", e => {
     if (tab.dataset.tab === "fu-his") loadHis();
     if (tab.dataset.tab === "fu-titer") loadTiterDue();
     if (tab.dataset.tab === "fu-plan") loadPlan();
+    if (tab.dataset.tab === "fu-line") loadLine();
+    skelStart(document.getElementById("tab-" + tab.dataset.tab) || tab.closest(".page-section"));
     return;
   }
 });
@@ -1134,16 +1235,19 @@ function openStaffForm(id) {
   const s = id ? STATE.staffCache.find(x => x.id === id) : null;
   function build(full) {
     const fields = (STATE.settingsPublic.FORM_FIELDS || []).filter(f => f.show);
-    const html = '<h3 style="margin-top:0">' + (id ? "แก้ไขข้อมูลบุคลากร" : "ลงทะเบียนบุคลากรใหม่") + '</h3><div class="form-grid">' + fields.map(f => fieldInputHtml(f, full || s || {})).join("") + '</div>' +
+    const html = '<h3 style="margin-top:0">' + (id ? "แก้ไขข้อมูลบุคลากร" : "ลงทะเบียนบุคลากรใหม่") + '</h3><div class="form-grid">' + fields.map(f => fieldInputHtml(f, full || s || {})).join("") +
+      '<div class="form-field full"><label>LINE User ID (สำหรับแจ้งเตือนนัดวัคซีน — ขึ้นต้น U ตามด้วย 32 ตัว)</label><input id="f-lineUserId" autocomplete="off" spellcheck="false" placeholder="Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" value="' + escapeHtml((full || s || {}).lineUserId || "") + '">' + (id ? '<button type="button" class="btn btn-sm btn-outline" id="btn-line-test" style="margin-top:6px">ส่งข้อความทดสอบ (บันทึกก่อนทดสอบ)</button>' : '') + '</div></div>' +
       '<div id="dup-warning"></div><div class="form-actions"><button class="btn btn-primary" id="btn-save-staff-form">บันทึก</button><button class="btn btn-outline" id="btn-cancel-staff-form">ยกเลิก</button></div>';
     const m = openModal(html, { wide: true });
     m.querySelector("#btn-cancel-staff-form").onclick = closeModal;
     m.querySelector("#btn-save-staff-form").onclick = () => doSaveStaff(id, m, false);
+    const tb = m.querySelector("#btn-line-test");
+    if (tb) tb.onclick = () => { setBtnLoading(tb, true); gs.run.withSuccessHandler(() => { setBtnLoading(tb, false); showToast("ส่งข้อความทดสอบแล้ว — ตรวจใน LINE ของผู้รับ", "success"); }).withFailureHandler(e => { setBtnLoading(tb, false); showToast(errMsg(e), "error"); }).sendLineTest(id); };
   }
   if (id) { gs.run.withSuccessHandler(p => build(p.staff)).withFailureHandler(() => build({})).getProfile(id); } else build({});
 }
 function collectStaffForm() {
-  const f = {}; (STATE.settingsPublic.FORM_FIELDS || []).filter(x => x.show).forEach(x => { const el = $("f-" + x.key); if (el) f[x.key] = el.value; }); return f;
+  const f = {}; (STATE.settingsPublic.FORM_FIELDS || []).filter(x => x.show).forEach(x => { const el = $("f-" + x.key); if (el) f[x.key] = el.value; }); const ln = $("f-lineUserId"); if (ln) f.lineUserId = ln.value; return f;
 }
 function doSaveStaff(id, m, force) {
   const f = collectStaffForm(); if (id) f.id = id;
@@ -1312,6 +1416,166 @@ function loadPlan() {
   }).planCampaign(cid, {});
 }
 $("plan-campaign").addEventListener("change", loadPlan);
+
+/* ============================================================ แจ้งเตือน LINE (นัดฉีดวัคซีนรายบุคคล) */
+const IS_ADMIN = () => STATE.user && STATE.user.role === "admin";
+let LINE_ST = null, LINE_PV = null;
+/* ============================================================ เชื่อม Google Sheet (คำตอบจาก Google Form) */
+const FS = { headers: [], fields: [], detected: {}, saved: {}, previewOk: false };
+function fsFmtTime(iso) { try { return new Date(iso).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" }); } catch (e) { return iso; } }
+function loadFormSync() {
+  if (!IS_ADMIN()) return;
+  gs.run.withSuccessHandler(c => {
+    FS.saved = c || {}; $("fs-owner").textContent = c.owner || "เจ้าของ Apps Script"; $("fs-url").value = c.ref || "";
+    $("fs-last").textContent = c.lastSyncAt ? "ซิงก์ล่าสุด " + fsFmtTime(c.lastSyncAt) + (c.lastStats ? " • อ่าน " + c.lastStats.rows + " แถว • ใหม่ " + c.lastStats.staffNew + " • จับคู่เดิม " + c.lastStats.staffMatched : "") : "";
+    if (c.ref) fsInspect(true);
+  }).withFailureHandler(() => {}).getFormSync();
+}
+function fsCampOptions(sel) {
+  $("fs-camp").innerHTML = '<option value="">ไม่ผูกแคมเปญ (เพิ่มรายชื่อบุคลากรอย่างเดียว)</option>' + STATE.campaigns.filter(c => c.status === "open").map(c => '<option value="' + c.id + '"' + (c.id === sel ? " selected" : "") + '>' + escapeHtml(c.name) + '</option>').join("");
+}
+function fsInspect(fromSaved, tabOverride) {
+  const url = $("fs-url").value.trim(); if (!url) { showToast("กรุณาวางลิงก์ Google Sheet", "error"); return; }
+  const btn = $("btn-fs-inspect"); setBtnLoading(btn, true); FS.previewOk = false; $("btn-fs-run").disabled = true;
+  $("fs-summary").innerHTML = '<div class="skeleton" style="height:56px"></div>'; $("fs-issues").innerHTML = "";
+  gs.run.withSuccessHandler(r => {
+    setBtnLoading(btn, false); $("fs-summary").innerHTML = ""; FS.headers = r.headers; FS.fields = r.fields; FS.detected = r.mapping;
+    const sv = fromSaved && !tabOverride && FS.saved.ref === url && (FS.saved.tab || "") === r.tab ? FS.saved : {};
+    $("fs-config").classList.remove("hidden");
+    $("fs-found").innerHTML = '<span class="material-icons-outlined">check_circle</span><div>เชื่อมต่อสำเร็จ: <b>' + escapeHtml(r.title) + '</b> • พบข้อมูล <b>' + r.rowCount + '</b> แถว • ' + r.headers.filter(Boolean).length + ' คอลัมน์</div>';
+    $("fs-tab").innerHTML = r.tabs.map(t => '<option' + (t === r.tab ? " selected" : "") + '>' + escapeHtml(t) + '</option>').join("");
+    fsCampOptions(sv.campaignId != null ? sv.campaignId : ((STATE.campaigns.find(c => c.status === "open") || {}).id || ""));
+    $("fs-defintent").value = sv.defaultIntent || "want"; $("fs-auto").checked = !!FS.saved.auto; $("fs-interval").value = String(FS.saved.intervalHours || 1); $("fs-auto-text").textContent = "ซิงก์อัตโนมัติ: " + ($("fs-auto").checked ? "เปิด" : "ปิด");
+    const optHtml = '<option value="">— ไม่ใช้ —</option>' + r.headers.map((h, i) => '<option value="' + i + '">' + (i + 1) + ". " + escapeHtml(String(h).slice(0, 60)) + '</option>').join("");
+    $("fs-map").innerHTML = r.fields.map(f => '<div class="form-field"><label>' + escapeHtml(f[1]) + '</label><select data-f="' + f[0] + '">' + optHtml + '</select></div>').join("");
+    document.querySelectorAll("#fs-map select").forEach(el => { const k = el.dataset.f, v = sv.mapping && k in sv.mapping ? sv.mapping[k] : (r.mapping[k] != null ? r.mapping[k] : ""); el.value = String(v === "" || v == null || v < 0 ? "" : v); });
+    if (!(r.mapping.fullName != null || r.mapping.firstName != null)) showToast("ระบบยังหาคอลัมน์ชื่อไม่เจอ — กรุณาเลือกในตารางจับคู่", "warning");
+  }).withFailureHandler(e => { setBtnLoading(btn, false); $("fs-summary").innerHTML = '<div class="alert-box danger">' + escapeHtml(errMsg(e)) + '</div>'; $("fs-config").classList.add("hidden"); }).formSyncInspect(url, tabOverride || (fromSaved ? FS.saved.tab : "") || "");
+}
+function fsCollect() {
+  const mapping = {}; document.querySelectorAll("#fs-map select").forEach(el => { mapping[el.dataset.f] = el.value; });
+  return { ref: $("fs-url").value.trim(), tab: $("fs-tab").value, campaignId: $("fs-camp").value, defaultIntent: $("fs-defintent").value, mapping, auto: $("fs-auto").checked, intervalHours: +$("fs-interval").value };
+}
+function fsShow(r, done) {
+  const s = r.stats, m = r.meta || {};
+  $("fs-summary").innerHTML = '<div class="grid-3">' +
+    '<div class="stat-card"><span class="stat-label">แถวที่อ่าน / จำนวนคน (หลังรวมผู้ส่งซ้ำ)</span><span class="stat-value">' + (m.rows || 0) + ' / ' + (m.people || 0) + '</span></div>' +
+    '<div class="stat-card"><span class="stat-label">บุคลากร: ' + (done ? "เพิ่มใหม่" : "จะเพิ่มใหม่") + ' / จับคู่กับข้อมูลเดิม</span><span class="stat-value">' + s.staffNew + ' / ' + s.staffMatched + '</span></div>' +
+    '<div class="stat-card"><span class="stat-label">ความประสงค์: ใหม่ / อัปเดต</span><span class="stat-value">' + s.enrollNew + ' / ' + s.enrollUpdated + '</span></div></div>' +
+    '<div class="card-sub" style="margin:10px 0">หน่วยงานใหม่: ' + s.deptNew + ' • เติมข้อมูลบุคลากรเดิมที่ยังว่าง: ' + s.staffFilled + ' • คงค่าในระบบ (ขัดแย้งกับฟอร์ม): ' + s.enrollConflict + '</div>' +
+    (r.counts.error ? '<div class="alert-box danger">พบข้อผิดพลาด ' + r.counts.error + ' รายการ — แก้ตามรายการด้านล่างก่อน</div>' : '<div class="alert-box ' + (r.counts.warn ? "warning" : "success") + '">' + (done ? "นำเข้าเรียบร้อย" : "พร้อมนำเข้า") + (r.counts.warn ? " • มีคำเตือน " + r.counts.warn + " รายการ (อ่านด้านล่างก่อนยืนยัน)" : "") + '</div>');
+  renderIssues(r.issues, "fs-issues");
+}
+$("btn-fs-inspect").onclick = () => fsInspect(false);
+$("fs-tab").addEventListener("change", () => fsInspect(false, $("fs-tab").value));
+$("fs-config").addEventListener("change", e => { if (e.target.id === "fs-tab") return; FS.previewOk = false; $("btn-fs-run").disabled = true; if (e.target.id === "fs-auto") $("fs-auto-text").textContent = "ซิงก์อัตโนมัติ: " + (e.target.checked ? "เปิด" : "ปิด"); });
+$("btn-fs-preview").onclick = () => {
+  const btn = $("btn-fs-preview"); setBtnLoading(btn, true); $("fs-summary").innerHTML = '<div class="skeleton" style="height:56px"></div>';
+  gs.run.withSuccessHandler(r => { setBtnLoading(btn, false); fsShow(r, false); FS.previewOk = !r.counts.error; $("btn-fs-run").disabled = !FS.previewOk; })
+    .withFailureHandler(e => { setBtnLoading(btn, false); $("fs-summary").innerHTML = '<div class="alert-box danger">' + escapeHtml(errMsg(e)) + '</div>'; }).formSyncPreview(fsCollect());
+};
+$("btn-fs-run").onclick = () => {
+  if (!FS.previewOk || !confirm("ยืนยันนำเข้า/ซิงก์ข้อมูลจากชีตนี้จริงหรือไม่? ระบบจะเพิ่มบุคลากรใหม่และความประสงค์ ส่วนข้อมูลเดิมจะไม่ถูกลบ")) return;
+  const btn = $("btn-fs-run"); setBtnLoading(btn, true);
+  gs.run.withSuccessHandler(r => { setBtnLoading(btn, false); btn.disabled = true; FS.previewOk = false; fsShow(r, true); showToast("ซิงก์ข้อมูลจากฟอร์มสำเร็จ", "success"); loadFormSyncLast(); })
+    .withFailureHandler(e => { setBtnLoading(btn, false); showToast(errMsg(e), "error"); }).formSyncRun(fsCollect(), true);
+};
+function loadFormSyncLast() { gs.run.withSuccessHandler(c => { FS.saved = c; $("fs-last").textContent = c.lastSyncAt ? "ซิงก์ล่าสุด " + fsFmtTime(c.lastSyncAt) + (c.lastStats ? " • อ่าน " + c.lastStats.rows + " แถว • ใหม่ " + c.lastStats.staffNew + " • จับคู่เดิม " + c.lastStats.staffMatched : "") : ""; }).getFormSync(); }
+$("btn-fs-save").onclick = () => {
+  const btn = $("btn-fs-save"); setBtnLoading(btn, true);
+  gs.run.withSuccessHandler(c => { setBtnLoading(btn, false); FS.saved = c; showToast(c.auto ? "บันทึกแล้ว — อย่าลืมรัน installFormSyncTrigger ใน Apps Script" : "บันทึกการเชื่อมต่อแล้ว", "success"); })
+    .withFailureHandler(e => { setBtnLoading(btn, false); showToast(errMsg(e), "error"); }).saveFormSync(fsCollect());
+};
+
+function loadLine() {
+  $("line-campaign").innerHTML = STATE.campaigns.filter(c => c.status === "open").map(c => '<option value="' + c.id + '"' + (c.id === STATE.campaignId ? " selected" : "") + '>' + escapeHtml(c.name) + '</option>').join("");
+  $("line-admin").classList.toggle("hidden", !IS_ADMIN()); $("line-enabled").disabled = !IS_ADMIN();
+  gs.run.withSuccessHandler(st => { LINE_ST = st; renderLineSettings(st); loadLinePreview(); loadLineLog(); }).withFailureHandler(e => showToast(errMsg(e), "error")).getLineSettings();
+}
+function renderLineSettings(st) {
+  $("line-enabled").checked = !!st.enabled; $("line-enabled-text").textContent = "แจ้งเตือน LINE: " + (st.enabled ? "เปิด" : "ปิด");
+  $("line-status").innerHTML = '<span class="badge ' + (st.isServiceToday ? "badge-complete" : "badge-warning") + '">วันนี้ ' + (st.isServiceToday ? "เป็นวันทำการ" : "ไม่ใช่วันทำการ") + '</span>' +
+    (st.isServiceToday ? "" : '<span class="badge badge-info">วันทำการถัดไป ' + fmtDate(st.nextServiceDay) + '</span>') + '<span class="badge ' + (st.tokenSet ? "badge-complete" : "badge-incomplete") + '">' + (st.tokenSet ? "เชื่อม LINE แล้ว" : "ยังไม่ตั้ง Token") + '</span>';
+  $("line-warn").innerHTML = !st.tokenSet ? '<div class="alert-box danger"><span class="material-icons-outlined">key_off</span><div>ยังไม่ได้ตั้ง <b>LINE_CHANNEL_ACCESS_TOKEN</b> ใน Apps Script (Script properties) — ยังส่งไม่ได้</div></div>' : "";
+  document.querySelectorAll("#line-days input").forEach(i => { i.checked = st.weekdays.indexOf(+i.value) >= 0; i.disabled = !IS_ADMIN(); });
+  if (IS_ADMIN()) {
+    $("line-closed").value = (st.closedDates || []).join(", "); $("line-hour").value = st.sendHour; $("line-report").value = st.reportTo || ""; $("line-remind").value = st.remind || "same";
+    $("line-time").value = st.serviceTime || ""; $("line-place").value = st.place || ""; $("line-m1").value = st.msgD1 || ""; $("line-m2").value = st.msgD2 || ""; $("line-m3").value = st.msgD3 || "";
+    $("line-notes").innerHTML = (st.vaccines || []).map(v => '<div class="form-field full"><label>' + escapeHtml(v.name) + ' (' + escapeHtml(v.code) + ')</label><textarea data-vnote="' + escapeHtml(v.code) + '" rows="2" maxlength="300" style="width:100%">' + escapeHtml(v.note || "") + '</textarea></div>').join("");
+  }
+}
+function lineRenderSample(tpl, note) {
+  const o = { name: "นางสาวสมหญิง ใจดี", vaccine: "วัคซีนตัวอย่าง", dose: 1, date: "วันจันทร์ที่ 5 ต.ค. 2569", org: (STATE.settingsPublic && STATE.settingsPublic.ORG_NAME) || "หน่วยบริการ", dept: "งานผู้ป่วยนอก", time: $("line-time").value, place: $("line-place").value, note: note };
+  return tpl.split("\n").filter(l => { let e = false; l.replace(/\{(\w+)\}/g, (m, k) => { if (k in o && String(o[k] == null ? "" : o[k]).trim() === "") e = true; return m; }); return !e; })
+    .map(l => l.replace(/\{(\w+)\}/g, (m, k) => (k in o ? o[k] : m))).join("\n").replace(/\n{3,}/g, "\n\n").trim();
+}
+$("btn-line-preview-msg").onclick = () => {
+  const n = document.querySelector("#line-notes textarea"), box = $("line-msg-preview");
+  box.textContent = ["เข็มที่ 1", "เข็มที่ 2", "เข็มที่ 3"].map((h, i) => "── " + h + " ──\n" + lineRenderSample($("line-m" + (i + 1)).value, n ? n.value : "").replace(/เข็มที่ 1(?!\d)/, "เข็มที่ " + (i + 1))).join("\n\n");
+  box.classList.remove("hidden");
+};
+$("line-enabled").addEventListener("change", e => {
+  const on = e.target.checked;
+  gs.run.withSuccessHandler(st => { LINE_ST = st; renderLineSettings(st); loadLinePreview(); showToast(on ? "เปิดการแจ้งเตือน LINE แล้ว" : "ปิดการแจ้งเตือน LINE แล้ว", "success"); })
+    .withFailureHandler(err => { e.target.checked = !on; showToast(errMsg(err), "error"); }).saveLineSettings({ enabled: on });
+});
+$("btn-line-save").onclick = () => {
+  const btn = $("btn-line-save"), days = [...document.querySelectorAll("#line-days input:checked")].map(i => +i.value);
+  if (!days.length && !confirm("ยังไม่ได้เลือกวันทำการเลย จะไม่สามารถส่งแจ้งเตือนได้ ต้องการบันทึกหรือไม่?")) return;
+  setBtnLoading(btn, true);
+  gs.run.withSuccessHandler(st => { setBtnLoading(btn, false); LINE_ST = st; renderLineSettings(st); loadLinePreview(); showToast("บันทึกการตั้งค่าแล้ว", "success"); })
+    .withFailureHandler(e => { setBtnLoading(btn, false); showToast(errMsg(e), "error"); })
+    .saveLineSettings({ weekdays: days, closedDates: $("line-closed").value, sendHour: $("line-hour").value, reportTo: $("line-report").value, remind: $("line-remind").value, serviceTime: $("line-time").value, place: $("line-place").value,
+      msgD1: $("line-m1").value, msgD2: $("line-m2").value, msgD3: $("line-m3").value, vacNotes: Object.fromEntries([...document.querySelectorAll("#line-notes textarea")].map(t => [t.dataset.vnote, t.value])) });
+};
+function loadLinePreview() {
+  const cid = $("line-campaign").value; if (!cid) { $("line-body").innerHTML = '<tr><td colspan="7"><div class="empty-state">ไม่มีแคมเปญที่เปิดอยู่</div></td></tr>'; return; }
+  gs.run.withSuccessHandler(pv => {
+    LINE_PV = pv; const c = pv.counts;
+    const dose = Object.keys(c.byDose || {}).sort().map(k => 'เข็ม ' + k + ': <b>' + c.byDose[k] + '</b>').join(" • ") || "-";
+    const dept = Object.keys(c.byDept || {}).sort((a, b) => c.byDept[b] - c.byDept[a]).slice(0, 6).map(k => escapeHtml(k) + ' ' + c.byDept[k]).join(" • ");
+    $("line-summary").innerHTML = '<div class="alert-box info"><span class="material-icons-outlined">event</span><div>นัดฉีด <b>' + escapeHtml(pv.dateText) + '</b><br>ต้องเตรียมวัคซีน <b>' + c.total + '</b> โดส (' + dose + ')<br>พร้อมส่ง <b>' + c.ready + '</b> • ส่งแล้ว ' + c.sent + ' • ยังไม่มี LINE ID <b>' + c.noLine + '</b>' + (dept ? '<br><span style="opacity:.8">แยกหน่วยงาน: ' + dept + '</span>' : '') + '</div></div>' +
+      (pv.why ? '<div class="alert-box warning"><span class="material-icons-outlined">block</span><div>' + escapeHtml(pv.why) + '</div></div>' : "");
+    $("line-body").innerHTML = pv.rows.length ? pv.rows.map(r => {
+      const lineB = r.lineOk ? '<span class="badge badge-complete">มี</span>' : '<span class="badge badge-incomplete">' + (r.hasLine ? "ID ไม่ถูกต้อง" : "ยังไม่ลงทะเบียน") + '</span>';
+      const stB = r.sent ? '<span class="badge badge-complete">ส่งแล้ว ' + escapeHtml(String(r.sentAt).slice(11, 16)) + '</span>' : '<span class="badge badge-neutral">ยังไม่ส่ง</span>';
+      return '<tr><td>' + escapeHtml(r.name) + '</td><td>' + escapeHtml(r.dept) + '</td><td>เข็ม ' + r.doseNo + '</td><td>' + (r.source === "appointment" ? "นัดที่บันทึก" : "ตามแผน") + '</td><td>' + lineB + '</td><td>' + stB + '</td>' +
+        '<td><button class="btn btn-sm btn-line" data-line-one="' + r.staffId + '"' + (pv.canSend && r.lineOk ? "" : " disabled") + '>' + (r.sent ? "ส่งซ้ำ" : "ส่ง") + '</button></td></tr>';
+    }).join("") : '<tr><td colspan="7"><div class="empty-state">ไม่มีผู้ที่ต้องแจ้งเตือนในวันนี้</div></td></tr>';
+    $("btn-line-send-all").disabled = !(pv.canSend && c.ready > 0);
+  }).withFailureHandler(e => showToast(errMsg(e), "error")).previewLineNotify(cid, $("line-date").value || "", {});
+}
+$("line-campaign").addEventListener("change", loadLinePreview); $("line-date").addEventListener("change", loadLinePreview);
+$("btn-line-today").onclick = () => { $("line-date").value = ""; loadLinePreview(); };
+$("btn-line-next").onclick = () => { if (LINE_ST && LINE_ST.nextAfterToday) { $("line-date").value = LINE_ST.nextAfterToday; loadLinePreview(); } };
+$("btn-line-export").onclick = () => {
+  const pv = LINE_PV; if (!pv || !pv.rows.length) { showToast("ไม่มีรายชื่อให้ส่งออก", "info"); return; }
+  const rows = [["ลำดับ", "ชื่อ-สกุล", "หน่วยงาน", "เข็มที่", "ที่มา", "มี LINE ID", "แจ้งเตือนแล้ว", "ลงชื่อรับบริการ", "Lot", "หมายเหตุ"]]
+    .concat(pv.rows.map((r, i) => [i + 1, r.name, r.dept, r.doseNo, r.source === "appointment" ? "นัดที่บันทึก" : "ตามแผน", r.lineOk ? "มี" : "ไม่มี", r.sent ? "แล้ว" : "ยัง", "", "", ""]));
+  const ws = XLSX.utils.aoa_to_sheet(rows); ws["!cols"] = [{ wch: 6 }, { wch: 28 }, { wch: 22 }, { wch: 8 }, { wch: 14 }, { wch: 10 }, { wch: 12 }, { wch: 18 }, { wch: 12 }, { wch: 20 }];
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "รายชื่อวันฉีด"); XLSX.writeFile(wb, "รายชื่อนัดฉีดวัคซีน_" + pv.date + ".xlsx");
+};
+function loadLineLog() {
+  gs.run.withSuccessHandler(rows => {
+    $("line-log").innerHTML = rows.length ? rows.slice(0, 50).map(l => '<tr><td>' + escapeHtml(String(l.ts).slice(0, 16).replace("T", " ")) + '</td><td>' + escapeHtml(l.name) + '</td><td>' + (l.doseNo ? "เข็ม " + l.doseNo : "ทดสอบ") + '</td><td>' + fmtDate(l.targetDate) + '</td><td>' +
+      (l.status === "ok" ? '<span class="badge badge-complete">สำเร็จ</span>' : '<span class="badge badge-incomplete">ล้มเหลว</span>') + '</td><td>' + escapeHtml(l.detail || "") + '</td></tr>').join("") : '<tr><td colspan="6"><div class="empty-state">ยังไม่มีประวัติการส่ง</div></td></tr>';
+  }).listLineLog(100);
+}
+function doLineSend(staffIds, btn) {
+  const pv = LINE_PV; if (!pv) return; const n = staffIds ? 1 : pv.counts.ready;
+  if (!confirm(staffIds ? "ส่งแจ้งเตือนทาง LINE ให้บุคลากรคนนี้?" : "ส่งแจ้งเตือนทาง LINE ให้ " + n + " ราย สำหรับ" + pv.dateText + " ?")) return;
+  setBtnLoading(btn, true);
+  gs.run.withSuccessHandler(r => {
+    setBtnLoading(btn, false);
+    const bad = r.results.filter(x => x.status === "fail" || x.status === "no_line");
+    showToast("ส่งสำเร็จ " + r.sent + " ราย" + (r.failed ? " • ล้มเหลว " + r.failed : "") + (r.noLine ? " • ไม่มี LINE ID " + r.noLine : "") + (r.remaining ? " • เหลืออีก " + r.remaining + " (กดส่งอีกครั้ง)" : ""), r.failed ? "warning" : "success");
+    if (bad.length && staffIds) showToast(bad[0].name + ": " + bad[0].detail, "error");
+    loadLinePreview(); loadLineLog();
+  }).withFailureHandler(e => { setBtnLoading(btn, false); showToast(errMsg(e), "error"); })
+    .sendLineNotify({ campaignId: $("line-campaign").value, date: pv.date, staffIds: staffIds || null, resend: !!staffIds });
+}
+$("btn-line-send-all").onclick = () => doLineSend(null, $("btn-line-send-all"));
+document.addEventListener("click", e => { const b = e.target.closest("[data-line-one]"); if (b && !b.disabled) doLineSend([b.dataset.lineOne], b); });
 </script>
 <script>
 /* ============================================================ 9) STOCK / LOTS */
@@ -1529,9 +1793,9 @@ function readWorkbook(file) {
     reader.onerror = reject; reader.readAsArrayBuffer(file);
   });
 }
-function renderIssues(list) {
+function renderIssues(list, tid) {
   const order = { error: 0, warn: 1, info: 2 }, sorted = list.slice().sort((a, b) => order[a.level] - order[b.level]);
-  $("imp-issues").innerHTML = sorted.slice(0, 300).map(i => '<div class="issue-row ' + i.level + '">' + (i.sheet ? '<b>[' + escapeHtml(i.sheet) + (i.row ? " แถว " + i.row : "") + ']</b> ' : "") + escapeHtml(i.msg) + '</div>').join("") + (sorted.length > 300 ? '<div class="card-sub">...และอีก ' + (sorted.length - 300) + ' รายการ</div>' : "");
+  $(tid || "imp-issues").innerHTML = sorted.slice(0, 300).map(i => '<div class="issue-row ' + i.level + '">' + (i.sheet ? '<b>[' + escapeHtml(i.sheet) + (i.row ? " แถว " + i.row : "") + ']</b> ' : "") + escapeHtml(i.msg) + '</div>').join("") + (sorted.length > 300 ? '<div class="card-sub">...และอีก ' + (sorted.length - 300) + ' รายการ</div>' : "");
 }
 function handleImportFile(file) {
   $("imp-summary").innerHTML = '<div class="skeleton" style="height:60px"></div>'; $("imp-issues").innerHTML = ""; $("imp-actions").classList.add("hidden");
@@ -1606,19 +1870,6 @@ function openPinModal(force) {
   foot.insertAdjacentHTML('afterbegin', '<a href="#" id="link-pin" data-nav="กำลังเปิดหน้าต่าง..." style="color:rgba(255,255,255,.75);font-size:12px;margin-right:12px">เปลี่ยน PIN</a>');
   $('link-pin').onclick = e => { e.preventDefault(); openPinModal(false); };
   const _enter = enterApp; enterApp = function () { _enter(); if (STATE.mustPin) setTimeout(() => openPinModal(true), 400); };
-})();
-/* ===== Loading ทุกครั้งที่กดปุ่ม (วางท้ายสุดเพื่อให้ทำงานหลังตัวจัดการอื่นทั้งหมด) ===== */
-(function () {
-  const SKIP = ".modal-close,#btn-open-sidebar,.topbar-menu-btn,[data-noload]";
-  const NAV = "a[href='#'],[data-nav],.sidebar-nav-item,.bottom-nav-item";
-  document.addEventListener("click", e => {
-    const t = e.target; if (!t || !t.closest) return;
-    const el = t.closest("button,.btn,a[href='#'],[data-nav],.sidebar-nav-item,.bottom-nav-item");
-    if (!el || el.closest("#loadingOverlay") || el.matches(SKIP) || el.disabled || el.classList.contains("btn-busy")) return;
-    if (el.matches(NAV)) { if (pending === 0) flashOverlay(el.getAttribute("data-nav") || "กำลังเปิดหน้า...", LOAD_CFG.navMs); return; }   // เปลี่ยนหน้า/เมนู: overlay สั้น ๆ (ถ้ามีการเรียกเซิร์ฟเวอร์ overlay จะขึ้นเองอยู่แล้ว)
-    btnBusy(el, LOAD_CFG.localMin);                                                                                                       // ปุ่มทั่วไป: วงหมุนบนปุ่มทันที
-    if (LOAD_CFG.overlayForLocalClicks && pending === 0) flashOverlay("กำลังดำเนินการ...", LOAD_CFG.localMin);
-  });
 })();
 </script>
 </body>
