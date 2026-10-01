@@ -441,6 +441,7 @@ body{font-family:'Prompt','Plus Jakarta Sans',sans-serif;font-size:14.5px;line-h
       </div>
       <div style="display:flex;align-items:center;gap:12px">
         <select id="topbar-campaign" style="min-height:36px;border-radius:9px;border:1px solid var(--border);padding:4px 8px;font-size:12.5px;max-width:220px"></select>
+        <div id="sync-chip" class="hidden" title="ข้อมูลจาก Google Form อัปเดตอัตโนมัติ" style="font-size:12px;color:#067647;background:#ecfdf3;border:1px solid #abefc6;border-radius:999px;padding:3px 10px;white-space:nowrap"></div>
         <div style="font-size:12px;color:var(--muted)" id="topbar-clock"></div>
       </div>
     </div>
@@ -636,6 +637,13 @@ body{font-family:'Prompt','Plus Jakarta Sans',sans-serif;font-size:14.5px;line-h
       <section class="page-section" id="section-import">
         <div class="section-header"><h2>นำเข้าข้อมูล</h2></div>
         <div class="alert-box info">รองรับไฟล์ชีตเดิม 4 รูปแบบ: MR (ปีงบ 2568), ไข้หวัดใหญ่ (ปีงบ 2569), HB (ปีงบ 2568), HB (ปีงบ 2569) — ระบบจะจับคู่บุคลากรด้วยเลขบัตร/ชื่อ และรวมกับข้อมูลเดิมอัตโนมัติ ไม่สร้างรายการซ้ำ</div>
+        <div class="card" id="fm-card">
+          <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center"><b style="font-size:16px">ฟอร์มลงทะเบียนปีงบ 2570 (FLU / MR / HB) — ซิงก์เรียลไทม์</b><span id="fm-last" class="card-sub"></span></div>
+          <div class="alert-box info" style="margin-top:10px"><span class="material-icons-outlined">bolt</span><div>ระบบอ่านชีตคำตอบของ Google Form อัตโนมัติ <b>ทุก 5 นาที</b> (และทันทีที่มีผู้ส่งฟอร์ม ถ้าตั้ง trigger แล้ว) รวมถึงทุก ~1 นาทีขณะเปิดหน้าเว็บนี้ • ผู้ส่งซ้ำใช้คำตอบล่าสุด • ไม่สร้างรายการซ้ำ • แชร์ชีตคำตอบให้บัญชี <b id="fm-owner">เจ้าของ Apps Script</b> (สิทธิ์ผู้ดูก็พอ)</div></div>
+          <div class="table-wrap" style="margin-top:8px"><table class="data-table"><thead><tr><th>ฟอร์ม</th><th>ลิงก์ชีตคำตอบ</th><th>แคมเปญปลายทาง</th><th>เปิดซิงก์</th><th>สถานะล่าสุด</th></tr></thead><tbody id="fm-body"></tbody></table></div>
+          <div class="form-actions"><button class="btn btn-outline" id="btn-fm-save" type="button"><span class="material-icons-outlined">save</span> บันทึกการเชื่อมต่อ</button><button class="btn btn-primary" id="btn-fm-sync" type="button"><span class="material-icons-outlined">sync</span> ซิงก์ทั้งหมดตอนนี้</button></div>
+          <div class="card-sub" style="margin-top:6px">ติดตั้งครั้งแรก: รัน <b>setupRealtimeForms</b> ใน Apps Script หนึ่งครั้ง (สร้างแคมเปญ 2570 + ตั้งตัวซิงก์) • เวลาทั้งหมดในระบบแสดงเป็นเวลาไทย (UTC+7)</div>
+        </div>
         <div class="card" id="fs-card">
           <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center"><b style="font-size:16px">เชื่อม Google Sheet จากแบบฟอร์มลงทะเบียน (Google Form)</b><span id="fs-last" class="card-sub"></span></div>
           <div class="alert-box info" style="margin-top:10px"><span class="material-icons-outlined">share</span><div>เปิดชีตที่เก็บ "คำตอบ" ของ Google Form แล้วกด <b>แชร์</b> ให้บัญชี <b id="fs-owner">เจ้าของ Apps Script</b> (สิทธิ์ผู้ดูก็พอ) จากนั้นวางลิงก์ด้านล่าง ระบบจะจับคู่คอลัมน์ให้เอง ตรวจก่อนนำเข้า และซิงก์ซ้ำได้โดยไม่สร้างรายการซ้ำ (ผู้ส่งซ้ำใช้คำตอบล่าสุด)</div></div>
@@ -781,6 +789,14 @@ function escapeHtml(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, c
 function errMsg(e) { return (e && e.message) || String(e); }
 function fmtDate(iso) { if (!iso) return "-"; const p = iso.split("-"); return p.length === 3 ? (+p[2]) + "/" + (+p[1]) + "/" + (+p[0] + 543) : iso; }
 function fmtDateShort(iso) { return fmtDate(iso); }
+/* เวลาประเทศไทย (Asia/Bangkok) ทุกจุด — ไม่พึ่งโซนเวลาของเครื่องผู้ใช้ */
+const TH_TZ = "Asia/Bangkok";
+function thToday() { return new Date().toLocaleDateString("en-CA", { timeZone: TH_TZ }); }   // yyyy-mm-dd ตามเวลาไทย
+function fmtThTime(iso, mode) {   // mode: "t" = เฉพาะเวลา, "dt" = วันที่+เวลา (พ.ศ.)
+  const d = new Date(iso); if (!iso || isNaN(d)) return iso || "-";
+  const o = mode === "t" ? { hour: "2-digit", minute: "2-digit" } : { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" };
+  return d.toLocaleString("th-TH", Object.assign({ timeZone: TH_TZ }, o)) + (mode === "t" ? "" : " น.");
+}
 
 /* ---------- Loading ----------
    • ล็อกอิน / หน้าก่อนเข้าระบบ: ใช้ overlay + icon loading แบบเดิม (showLoading/hideLoading) และวงหมุนบนปุ่มล็อกอิน
@@ -936,6 +952,7 @@ function enterApp() {
   $("sidebar-user").textContent = STATE.user.name + " (" + ({ admin: "ผู้ดูแลระบบ", vaccinator: "ผู้ให้บริการวัคซีน", viewer: "ผู้ดูข้อมูล" }[STATE.user.role] || STATE.user.role) + ")";
   if (STATE.user.role === "viewer") document.querySelectorAll('[data-page="import"],[data-page="settings"]').forEach(e => e.classList.add("hidden"));
   bootstrapApp();
+  setTimeout(() => { if (typeof startAutoFormSync === "function") startAutoFormSync(); }, 2500);
 }
 
 /* ---------- หน้าลงทะเบียนด้วยตนเอง ---------- */
@@ -1131,7 +1148,7 @@ $("self-form").addEventListener("submit", submitSelf);
 $("topbar-campaign").addEventListener("change", e => { STATE.campaignId = e.target.value; const active = document.querySelector(".page-section.active"); if (active) goToPage(active.id.replace("section-", "")); });
 
 (function boot() {
-  setInterval(() => { $("topbar-clock").textContent = new Date().toLocaleString("th-TH"); }, 1000);
+  setInterval(() => { $("topbar-clock").textContent = new Date().toLocaleString("th-TH", { timeZone: TH_TZ }) + " (เวลาไทย)"; }, 1000);
   if (location.hash === "#self") { gs.run.withSuccessHandler(showSelfPage).getPublicSettings(); return; }
   let tok = "", user = null;
   try { tok = sessionStorage.getItem("vr_token") || ""; user = JSON.parse(sessionStorage.getItem("vr_user") || "null"); } catch (_) {}
@@ -1275,7 +1292,7 @@ $("btn-new-staff").onclick = () => openStaffForm(null);
 </script>
 <script>
 /* ============================================================ 7) RECORD DOSE */
-function todayIso() { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+function todayIso() { return thToday(); }
 function initRecordPage() {
   $("rec-date").value = todayIso(); $("ses-date").value = todayIso();
   $("rec-campaign").innerHTML = STATE.campaigns.filter(c => c.status === "open").map(c => '<option value="' + c.id + '">' + escapeHtml(c.name) + '</option>').join("");
@@ -1431,9 +1448,75 @@ const IS_ADMIN = () => STATE.user && STATE.user.role === "admin";
 let LINE_ST = null, LINE_PV = null;
 /* ============================================================ เชื่อม Google Sheet (คำตอบจาก Google Form) */
 const FS = { headers: [], fields: [], detected: {}, saved: {}, previewOk: false };
-function fsFmtTime(iso) { try { return new Date(iso).toLocaleString("th-TH", { dateStyle: "medium", timeStyle: "short" }); } catch (e) { return iso; } }
+function fsFmtTime(iso) { return fmtThTime(iso, "dt"); }
+
+/* ============================================================ ซิงก์ฟอร์มหลายชีต (FLU/MR/HB) แบบเรียลไทม์ */
+const FM = { list: [], busy: false };
+function fmStatus(x) {
+  if (!x.enabled) return '<span class="badge badge-neutral">ปิดอยู่</span>';
+  if (x.lastError) return '<span class="badge badge-incomplete">ผิดพลาด</span><div class="card-sub" style="max-width:260px;white-space:normal">' + escapeHtml(x.lastError) + '</div>';
+  if (!x.lastSyncAt) return '<span class="badge badge-info">รอซิงก์ครั้งแรก</span>';
+  const st = x.lastStats || {};
+  return '<span class="badge badge-complete">เชื่อมแล้ว</span><div class="card-sub">' + fsFmtTime(x.lastSyncAt) + (x.lastStats ? "<br>อ่าน " + st.rows + " แถว • ใหม่ " + st.staffNew + " • ความประสงค์ใหม่ " + st.enrollNew : "") + '</div>';
+}
+function fmRender(r) {
+  FM.list = r.sources || []; $("fm-owner").textContent = r.owner || "เจ้าของ Apps Script";
+  const camps = STATE.campaigns || [];
+  $("fm-body").innerHTML = FM.list.map((x, i) => {
+    const opts = '<option value="">— เลือกแคมเปญ —</option>' + camps.map(c => '<option value="' + c.id + '"' + (c.id === x.campaignId ? " selected" : "") + '>' + escapeHtml(c.name) + (c.status !== "open" ? " (ปิดแล้ว)" : "") + '</option>').join("");
+    return '<tr data-i="' + i + '"><td><b>' + escapeHtml(x.label) + '</b></td>' +
+      '<td><input data-k="ref" value="' + escapeHtml(x.ref) + '" spellcheck="false" autocomplete="off" style="min-width:240px;width:100%"></td>' +
+      '<td><select data-k="campaignId" style="min-width:200px">' + opts + '</select></td>' +
+      '<td><label class="switch"><input type="checkbox" data-k="enabled"' + (x.enabled ? " checked" : "") + '><span class="sw-track"></span></label></td>' +
+      '<td>' + fmStatus(x) + '</td></tr>';
+  }).join("");
+  const at = FM.list.reduce((m, x) => (x.lastSyncAt && x.lastSyncAt > m ? x.lastSyncAt : m), "");
+  $("fm-last").textContent = (at ? "ซิงก์ล่าสุด " + fsFmtTime(at) : "ยังไม่เคยซิงก์") + (r.checkedAt ? " • ตรวจล่าสุด " + fmtThTime(r.checkedAt, "t") + " น." : "");
+}
+function loadFormMulti() {
+  if (!IS_ADMIN()) { $("fm-card").classList.add("hidden"); return; }
+  gs.run.silent().withSuccessHandler(fmRender).withFailureHandler(() => {}).getFormSources();
+}
+function fmCollect() {
+  return FM.list.map((x, i) => {
+    const tr = document.querySelector('#fm-body tr[data-i="' + i + '"]'), o = Object.assign({}, x);
+    tr.querySelectorAll("[data-k]").forEach(el => { o[el.dataset.k] = el.type === "checkbox" ? el.checked : el.value.trim(); });
+    if (o.ref !== x.ref) o.tab = "";   // เปลี่ยนลิงก์ → เลือกแท็บจาก gid ในลิงก์ใหม่
+    return o;
+  });
+}
+$("btn-fm-save").onclick = () => {
+  const btn = $("btn-fm-save"); setBtnLoading(btn, true);
+  gs.run.withSuccessHandler(r => { setBtnLoading(btn, false); fmRender(r); showToast("บันทึกการเชื่อมต่อแล้ว — ซิงก์ครั้งถัดไปจะใช้ค่าใหม่", "success"); })
+    .withFailureHandler(e => { setBtnLoading(btn, false); showToast(errMsg(e), "error"); }).saveFormSources(fmCollect());
+};
+$("btn-fm-sync").onclick = () => {
+  const btn = $("btn-fm-sync"); setBtnLoading(btn, true);
+  gs.run.withSuccessHandler(r => {
+    setBtnLoading(btn, false); const bad = (r.sources || []).filter(x => x.error);
+    showToast(bad.length ? "ซิงก์ไม่สำเร็จ " + bad.length + " ฟอร์ม: " + bad[0].error : (r.changed ? "ซิงก์สำเร็จ — มีข้อมูลใหม่" : "ซิงก์สำเร็จ — ข้อมูลเป็นปัจจุบันแล้ว"), bad.length ? "error" : "success");
+    loadFormMulti(); refreshAfterSync(r);
+  }).withFailureHandler(e => { setBtnLoading(btn, false); showToast(errMsg(e), "error"); }).formSyncAll({ force: true });
+};
+/* ซิงก์เบื้องหลังขณะเปิดหน้าเว็บ: ทุก 60 วินาที (เฉพาะแท็บที่มองเห็นอยู่) — ถ้ามีข้อมูลใหม่จะรีเฟรชหน้าที่เปิดอยู่ */
+function chipSet(at) { const c = $("sync-chip"); if (!c || !at) return; c.textContent = "ฟอร์มอัปเดต " + fmtThTime(at, "t") + " น."; c.classList.remove("hidden"); }
+function refreshAfterSync(r) {
+  if (r && r.checkedAt) chipSet(r.checkedAt);
+  if (!r || !r.changed) return;
+  const active = document.querySelector(".page-section.active"); if (!active) return;
+  const key = active.id.replace("section-", "");
+  if (["dashboard", "staff", "followup", "quality"].indexOf(key) >= 0 && !document.getElementById("active-modal")) goToPage(key);
+  showToast("มีข้อมูลใหม่จากแบบฟอร์ม — อัปเดตแล้ว", "info");
+}
+let AUTOSYNC_T = 0;
+function autoFormSync() {
+  if (document.hidden || !STATE.user || ["admin", "vaccinator"].indexOf(STATE.user.role) < 0) return;
+  gs.run.silent().withSuccessHandler(r => { if (r && !r.skipped) refreshAfterSync(r); else if (r && r.checkedAt) chipSet(r.checkedAt); }).withFailureHandler(() => {}).formSyncAll({ minGapSec: 45 });
+}
+function startAutoFormSync() { clearInterval(AUTOSYNC_T); autoFormSync(); AUTOSYNC_T = setInterval(autoFormSync, 60000); if (!window.__vcHooked) { window.__vcHooked = 1; document.addEventListener("visibilitychange", () => { if (!document.hidden) autoFormSync(); }); } }
 function loadFormSync() {
   if (!IS_ADMIN()) return;
+  loadFormMulti();
   gs.run.withSuccessHandler(c => {
     FS.saved = c || {}; $("fs-owner").textContent = c.owner || "เจ้าของ Apps Script"; $("fs-url").value = c.ref || "";
     $("fs-last").textContent = c.lastSyncAt ? "ซิงก์ล่าสุด " + fsFmtTime(c.lastSyncAt) + (c.lastStats ? " • อ่าน " + c.lastStats.rows + " แถว • ใหม่ " + c.lastStats.staffNew + " • จับคู่เดิม " + c.lastStats.staffMatched : "") : "";
@@ -1547,7 +1630,7 @@ function loadLinePreview() {
       (pv.why ? '<div class="alert-box warning"><span class="material-icons-outlined">block</span><div>' + escapeHtml(pv.why) + '</div></div>' : "");
     $("line-body").innerHTML = pv.rows.length ? pv.rows.map(r => {
       const lineB = r.lineOk ? '<span class="badge badge-complete">มี</span>' : '<span class="badge badge-incomplete">' + (r.hasLine ? "ID ไม่ถูกต้อง" : "ยังไม่ลงทะเบียน") + '</span>';
-      const stB = r.sent ? '<span class="badge badge-complete">ส่งแล้ว ' + escapeHtml(String(r.sentAt).slice(11, 16)) + '</span>' : '<span class="badge badge-neutral">ยังไม่ส่ง</span>';
+      const stB = r.sent ? '<span class="badge badge-complete">ส่งแล้ว ' + escapeHtml(fmtThTime(r.sentAt, "t")) + '</span>' : '<span class="badge badge-neutral">ยังไม่ส่ง</span>';
       return '<tr><td>' + escapeHtml(r.name) + '</td><td>' + escapeHtml(r.dept) + '</td><td>เข็ม ' + r.doseNo + '</td><td>' + (r.source === "appointment" ? "นัดที่บันทึก" : "ตามแผน") + '</td><td>' + lineB + '</td><td>' + stB + '</td>' +
         '<td><button class="btn btn-sm btn-line" data-line-one="' + r.staffId + '"' + (pv.canSend && r.lineOk ? "" : " disabled") + '>' + (r.sent ? "ส่งซ้ำ" : "ส่ง") + '</button></td></tr>';
     }).join("") : '<tr><td colspan="7"><div class="empty-state">ไม่มีผู้ที่ต้องแจ้งเตือนในวันนี้</div></td></tr>';
@@ -1566,7 +1649,7 @@ $("btn-line-export").onclick = () => {
 };
 function loadLineLog() {
   gs.run.withSuccessHandler(rows => {
-    $("line-log").innerHTML = rows.length ? rows.slice(0, 50).map(l => '<tr><td>' + escapeHtml(String(l.ts).slice(0, 16).replace("T", " ")) + '</td><td>' + escapeHtml(l.name) + '</td><td>' + (l.doseNo ? "เข็ม " + l.doseNo : "ทดสอบ") + '</td><td>' + fmtDate(l.targetDate) + '</td><td>' +
+    $("line-log").innerHTML = rows.length ? rows.slice(0, 50).map(l => '<tr><td>' + escapeHtml(fmtThTime(l.ts, "dt")) + '</td><td>' + escapeHtml(l.name) + '</td><td>' + (l.doseNo ? "เข็ม " + l.doseNo : "ทดสอบ") + '</td><td>' + fmtDate(l.targetDate) + '</td><td>' +
       (l.status === "ok" ? '<span class="badge badge-complete">สำเร็จ</span>' : '<span class="badge badge-incomplete">ล้มเหลว</span>') + '</td><td>' + escapeHtml(l.detail || "") + '</td></tr>').join("") : '<tr><td colspan="6"><div class="empty-state">ยังไม่มีประวัติการส่ง</div></td></tr>';
   }).listLineLog(100);
 }
@@ -1784,7 +1867,7 @@ function openUserForm(u) {
       .saveUser({ id: u ? u.id : null, name: $("u-name").value, role: $("u-role").value, pin: $("u-pin").value, email: $("u-email").value, active: $("u-active").checked ? "yes" : "no" });
   };
 }
-function loadAuditList() { gs.run.withSuccessHandler(rows => { $("audit-body").innerHTML = rows.map(a => '<tr><td>' + new Date(a.ts).toLocaleString("th-TH") + '</td><td>' + escapeHtml(a.user) + '</td><td>' + escapeHtml(a.action) + '</td><td>' + escapeHtml(a.entity) + ' ' + escapeHtml(a.detail || "") + '</td></tr>').join(""); }).getAudit(200); }
+function loadAuditList() { gs.run.withSuccessHandler(rows => { $("audit-body").innerHTML = rows.map(a => '<tr><td>' + fmtThTime(a.ts, "dt") + '</td><td>' + escapeHtml(a.user) + '</td><td>' + escapeHtml(a.action) + '</td><td>' + escapeHtml(a.entity) + ' ' + escapeHtml(a.detail || "") + '</td></tr>').join(""); }).getAudit(200); }
 </script>
 <script>
 /* ============================================================ 13) IMPORT WIZARD (SheetJS ในเบราว์เซอร์ → ส่งเป็นอาเรย์ให้ backend) */
