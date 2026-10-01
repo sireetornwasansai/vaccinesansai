@@ -483,13 +483,14 @@ body{font-family:'Prompt','Plus Jakarta Sans',sans-serif;font-size:14.5px;line-h
         <div class="section-header"><h2>ทะเบียนบุคลากร</h2><button class="btn btn-primary" id="btn-new-staff"><span class="material-icons-outlined">person_add</span> ลงทะเบียนใหม่</button></div>
         <div class="card">
           <div class="form-grid" style="margin-bottom:0">
-            <div class="form-field"><label>ค้นหา (ชื่อ/เลขบัตร/HN/เบอร์)</label><div style="display:flex;gap:8px"><input id="staff-q" placeholder="พิมพ์แล้วกด ค้นหา หรือ Enter" style="flex:1;min-width:0"><button type="button" class="btn btn-primary" id="btn-staff-search" style="padding:10px 14px"><span class="material-icons-outlined">search</span> ค้นหา</button><button type="button" class="btn btn-outline" id="btn-staff-clear" style="padding:10px 12px" title="ล้างคำค้น">ล้าง</button></div></div>
+            <div class="form-field"><label>ค้นหา (ชื่อ / เลขบัตรประชาชน / HN / เบอร์)</label><div style="display:flex;gap:8px"><input id="staff-q" placeholder="ชื่อ หรือเลขบัตร 13 หลัก (บางส่วนก็ได้)" style="flex:1;min-width:0"><button type="button" class="btn btn-primary" id="btn-staff-search" style="padding:10px 14px"><span class="material-icons-outlined">search</span> ค้นหา</button><button type="button" class="btn btn-outline" id="btn-staff-clear" style="padding:10px 12px" title="ล้างคำค้น">ล้าง</button></div></div>
+            <div class="form-field"><label>ประวัติการฉีดวัคซีน</label><select id="staff-history-filter"><option value="">ทั้งหมด</option><option value="none">ไม่มีประวัติฉีดเลย</option><option value="any">มีประวัติฉีดแล้ว</option></select></div>
             <div class="form-field"><label>หน่วยงาน</label><select id="staff-dept-filter"><option value="">ทั้งหมด</option></select></div>
             <div class="form-field"><label>สถานะบุคลากร</label><select id="staff-status-filter"><option value="">ทั้งหมด</option><option value="active">ปฏิบัติงาน</option><option value="resigned">ลาออก</option><option value="transferred">ย้ายหน่วยงาน</option><option value="leave">ลาศึกษาต่อ/พักงาน</option></select></div>
             <div class="form-field"><label>สถานะในแคมเปญ (ตามที่เลือกด้านบน)</label><select id="staff-state-filter"><option value="">ทั้งหมด</option><option value="complete">ครบแล้ว</option><option value="in_progress">อยู่ระหว่างฉีด</option><option value="not_started">ยังไม่เริ่ม</option><option value="declined">ไม่ประสงค์รับ</option><option value="not_enrolled">ยังไม่ลงทะเบียน</option></select></div>
           </div>
-          <div class="table-wrap"><table class="data-table"><thead><tr><th>ชื่อ-สกุล</th><th>หน่วยงาน</th><th>อายุ</th><th>เลขบัตร</th><th>สถานะแคมเปญ</th><th>สถานะบุคลากร</th></tr></thead><tbody id="staff-body"></tbody></table></div>
-          <div class="stat-sub" style="margin-top:8px" id="staff-count"></div>
+          <div class="table-wrap"><table class="data-table"><thead><tr><th>ชื่อ-สกุล</th><th>หน่วยงาน</th><th>อายุ</th><th>เลขบัตร</th><th>ประวัติฉีด</th><th>สถานะแคมเปญ</th><th>สถานะบุคลากร</th></tr></thead><tbody id="staff-body"></tbody></table></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px"><div class="stat-sub" id="staff-count"></div><button type="button" class="btn btn-outline" id="btn-staff-export" style="padding:8px 12px"><span class="material-icons-outlined">download</span> ส่งออกรายชื่อที่แสดง (Excel)</button></div>
         </div>
       </section>
 
@@ -1251,7 +1252,7 @@ function updateBadges(d) {
 /* ============================================================ 6) STAFF: list + search + profile + form */
 let staffSearchTimer = null;
 function loadStaff(quiet) {   // quiet===true: เรียกจากการพิมพ์ค้นหา ไม่ขึ้น overlay
-  const f = { q: $("staff-q").value, deptId: $("staff-dept-filter").value, status: $("staff-status-filter").value, campaignId: STATE.campaignId, state: $("staff-state-filter").value, limit: 500 };
+  const f = { q: $("staff-q").value, deptId: $("staff-dept-filter").value, status: $("staff-status-filter").value, campaignId: STATE.campaignId, state: $("staff-state-filter").value, history: $("staff-history-filter").value, limit: 500 };
   beginBusy();
   (quiet === true ? gs.run.silent() : gs.run).withSuccessHandler(busy(res => {
     STATE.staffCache = res.rows;
@@ -1262,15 +1263,22 @@ function loadStaff(quiet) {   // quiet===true: เรียกจากการ
         '<td><div class="staff-row"><div class="avatar">' + initials(s) + '</div><div>' + escapeHtml(fullName(s)) + (s.verified !== "yes" ? ' <span class="badge badge-warning">รอตรวจสอบ</span>' : '') + '</div></div></td>' +
         '<td>' + escapeHtml(s.dept || "-") + '</td><td>' + (s.age != null ? s.age : "-") + '</td>' +
         '<td>' + escapeHtml(s.cid || "-") + (s.hasCid && !s.cidOk ? ' <span class="material-icons-outlined" style="font-size:15px;color:var(--danger)" title="เลขบัตรไม่ผ่านการตรวจสอบ">error</span>' : '') + '</td>' +
+        '<td>' + (s.hasHistory ? '<span class="badge badge-complete">' + (s.doseCount ? s.doseCount + ' เข็ม' : 'เคยฉีด') + (s.vaccines && s.vaccines.length ? ' · ' + escapeHtml(s.vaccines.join('/')) : '') + '</span>' : '<span class="badge badge-incomplete">ไม่มีประวัติ</span>') + '</td>' +
         '<td>' + (st ? stateBadge(st.state) + (st.overdue ? ' <span class="badge badge-incomplete">เกิน ' + st.overdue + ' วัน</span>' : '') : '<span class="badge badge-neutral">-</span>') + '</td>' +
         '<td>' + ({ active: "ปฏิบัติงาน", resigned: "ลาออก", transferred: "ย้ายหน่วยงาน", leave: "ลา/พักงาน" }[s.status] || s.status) + '</td></tr>';
-    }).join("") : '<tr><td colspan="6"><div class="empty-state">ไม่พบข้อมูล</div></td></tr>';
+    }).join("") : '<tr><td colspan="7"><div class="empty-state">ไม่พบข้อมูล</div></td></tr>';
   })).withFailureHandler(busy(e => showToast(errMsg(e), "error"))).listStaff(f);
 }
 $("staff-q").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); loadStaff(); } });
+$("btn-staff-export").addEventListener("click", () => {
+  const rows = STATE.staffCache || []; if (!rows.length) return showToast("ไม่มีรายชื่อให้ส่งออก", "error");
+  const aoa = [["ชื่อ-สกุล", "หน่วยงาน", "ตำแหน่ง", "อายุ", "เบอร์โทร", "HN", "สถานะบุคลากร", "จำนวนเข็มที่ฉีด", "วัคซีนที่เคยฉีด", "ประวัติ"]].concat(rows.map(s => [fullName(s), s.dept || "", s.position || "", s.age == null ? "" : s.age, s.phone || "", s.hn || "", s.status, s.doseCount || 0, (s.vaccines || []).join(", "), s.hasHistory ? "มีประวัติ" : "ไม่มีประวัติ"]));
+  const ws = XLSX.utils.aoa_to_sheet(aoa); ws["!cols"] = [{ wch: 28 }, { wch: 22 }, { wch: 26 }, { wch: 6 }, { wch: 14 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 18 }, { wch: 14 }];
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "รายชื่อบุคลากร"); XLSX.writeFile(wb, "รายชื่อบุคลากร_" + new Date().toISOString().slice(0, 10) + ".xlsx");
+});
 $("btn-staff-search").addEventListener("click", () => loadStaff());
 $("btn-staff-clear").addEventListener("click", () => { $("staff-q").value = ""; loadStaff(); $("staff-q").focus(); });
-["staff-dept-filter", "staff-status-filter", "staff-state-filter"].forEach(id => $(id).addEventListener("change", loadStaff));
+["staff-dept-filter", "staff-status-filter", "staff-state-filter", "staff-history-filter"].forEach(id => $(id).addEventListener("change", loadStaff));
 document.addEventListener("click", e => { const tr = e.target.closest(".staff-row-tr"); if (tr) openProfile(tr.dataset.id); });
 
 function openProfile(id) {
