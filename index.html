@@ -449,22 +449,33 @@ body{font-family:'Prompt','Plus Jakarta Sans',sans-serif;font-size:14.5px;line-h
 
       <!-- DASHBOARD -->
       <section class="page-section active" id="section-dashboard">
+        <style>
+          .dh{display:flex;gap:22px;align-items:center;flex-wrap:wrap}.dh-main{flex:1;min-width:220px}.dh-name{font-size:19px;font-weight:700}
+          .dh-nums{display:flex;gap:22px;flex-wrap:wrap;margin-top:10px}.dh-nums div{min-width:90px}.dh-nums b{display:block;font-size:22px}.dh-nums span{font-size:12px;color:var(--muted)}
+          .ins-list{margin:10px 0 0;padding:0;list-style:none;display:grid;gap:8px}.ins-list li{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;line-height:1.55;padding:9px 12px;border-radius:12px;background:var(--background)}
+          .ins-list li .material-icons-outlined{font-size:19px;margin-top:1px}.ins-list .i-ok .material-icons-outlined{color:#12A594}.ins-list .i-warn .material-icons-outlined{color:#D97706}.ins-list .i-bad .material-icons-outlined{color:#DC2626}.ins-list .i-info .material-icons-outlined{color:var(--primary)}
+          .sb-row{display:grid;grid-template-columns:minmax(90px,36%) 1fr auto;gap:10px;align-items:center;margin:7px 0;font-size:12.5px}.sb-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+          .sb-bar{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--border)}.sb-bar i{display:block;height:100%}.sb-val{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+          .sb-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:6px 0 2px}.sb-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+          .dash-sec{margin-bottom:14px}.dash-link{background:none;border:none;color:var(--primary);cursor:pointer;font-size:12.5px;font-weight:600;padding:6px 0}
+          @media(max-width:700px){.sb-row{grid-template-columns:90px 1fr auto}}
+        </style>
         <div class="section-header"><h2>ภาพรวมแคมเปญ</h2><div id="dash-daysleft" class="chip hidden"></div></div>
         <div id="dash-alerts"></div>
+        <div class="card dash-sec"><div class="dh"><div id="dash-ring"></div><div class="dh-main"><div class="dh-name" id="dash-title">-</div><div class="card-sub" id="dash-sub"></div><div class="dh-nums" id="dash-nums"></div></div></div></div>
         <div class="stat-grid" id="dash-stats"></div>
-        <div class="grid-2">
-          <div class="card">
-            <b>ความครอบคลุม</b>
-            <div style="margin:12px 0"><div class="progress-bar"><div class="progress-fill" id="dash-cov-bar" style="width:0%"></div></div>
-              <div class="stat-sub" style="margin-top:6px"><span id="dash-cov-text">0%</span></div></div>
-            <div id="dash-timeline" style="display:flex;gap:3px;align-items:flex-end;height:70px;margin-top:10px"></div>
-          </div>
+        <div class="card dash-sec"><b>สรุปอัจฉริยะจากข้อมูลปัจจุบัน</b><ul class="ins-list" id="dash-insights"></ul></div>
+        <div class="grid-2 dash-sec">
+          <div class="card"><b>ความคืบหน้าสะสมของการฉีด</b><div class="card-sub">เส้น = จำนวนโดสสะสม · แท่ง = โดสต่อวัน · เส้นประ = เป้าหมาย</div><div id="dash-cum" style="margin-top:8px"></div></div>
           <div class="card"><b>ความคืบหน้าตามหน่วยงาน (ค้างมากสุดก่อน)</b>
-            <div class="table-wrap" style="margin-top:10px;max-height:260px;overflow-y:auto">
-              <table class="data-table"><thead><tr><th>หน่วยงาน</th><th>เป้าหมาย</th><th>ครบแล้ว</th><th></th></tr></thead><tbody id="dash-dept-body"></tbody></table>
-            </div>
-          </div>
+            <div class="sb-legend"><span><i style="background:#12A594"></i>ครบแล้ว</span><span><i style="background:#D97706"></i>อยู่ระหว่างฉีด</span><span><i style="background:#DC2626;opacity:.55"></i>ยังไม่เริ่ม</span><span><i style="background:#94a3b8"></i>ไม่ประสงค์ฉีด</span></div>
+            <div id="dash-depts"></div><button class="dash-link hidden" id="dash-dept-toggle" type="button"></button></div>
         </div>
+        <div class="grid-2 dash-sec">
+          <div class="card"><b>ความครอบคลุมตามช่วงอายุ</b><div id="dash-ages" style="margin-top:6px"></div></div>
+          <div class="card"><b>เปรียบเทียบทุกแคมเปญ</b><div id="dash-compare" style="margin-top:6px"></div></div>
+        </div>
+        <div class="card dash-sec"><b>วัคซีน Lot และโควตา</b><div id="dash-stock" style="margin-top:8px"></div></div>
       </section>
 
       <!-- STAFF -->
@@ -472,7 +483,7 @@ body{font-family:'Prompt','Plus Jakarta Sans',sans-serif;font-size:14.5px;line-h
         <div class="section-header"><h2>ทะเบียนบุคลากร</h2><button class="btn btn-primary" id="btn-new-staff"><span class="material-icons-outlined">person_add</span> ลงทะเบียนใหม่</button></div>
         <div class="card">
           <div class="form-grid" style="margin-bottom:0">
-            <div class="form-field"><label>ค้นหา (ชื่อ/เลขบัตร/HN/เบอร์)</label><input id="staff-q" placeholder="พิมพ์เพื่อค้นหา..."></div>
+            <div class="form-field"><label>ค้นหา (ชื่อ/เลขบัตร/HN/เบอร์)</label><div style="display:flex;gap:8px"><input id="staff-q" placeholder="พิมพ์แล้วกด ค้นหา หรือ Enter" style="flex:1;min-width:0"><button type="button" class="btn btn-primary" id="btn-staff-search" style="padding:10px 14px"><span class="material-icons-outlined">search</span> ค้นหา</button><button type="button" class="btn btn-outline" id="btn-staff-clear" style="padding:10px 12px" title="ล้างคำค้น">ล้าง</button></div></div>
             <div class="form-field"><label>หน่วยงาน</label><select id="staff-dept-filter"><option value="">ทั้งหมด</option></select></div>
             <div class="form-field"><label>สถานะบุคลากร</label><select id="staff-status-filter"><option value="">ทั้งหมด</option><option value="active">ปฏิบัติงาน</option><option value="resigned">ลาออก</option><option value="transferred">ย้ายหน่วยงาน</option><option value="leave">ลาศึกษาต่อ/พักงาน</option></select></div>
             <div class="form-field"><label>สถานะในแคมเปญ (ตามที่เลือกด้านบน)</label><select id="staff-state-filter"><option value="">ทั้งหมด</option><option value="complete">ครบแล้ว</option><option value="in_progress">อยู่ระหว่างฉีด</option><option value="not_started">ยังไม่เริ่ม</option><option value="declined">ไม่ประสงค์รับ</option><option value="not_enrolled">ยังไม่ลงทะเบียน</option></select></div>
@@ -1161,27 +1172,72 @@ $("topbar-campaign").addEventListener("change", e => { STATE.campaignId = e.targ
 </script>
 <script>
 /* ============================================================ 5) DASHBOARD */
+function dashBar(label, pct, val, color) { return '<div class="sb-row"><div class="sb-name" title="' + escapeHtml(label) + '">' + escapeHtml(label) + '</div><div class="sb-bar"><i style="width:' + Math.min(100, pct) + '%;background:' + (color || "var(--primary)") + '"></i></div><div class="sb-val">' + val + '</div></div>'; }
+function dashRing(p) { const c = 2 * Math.PI * 52; return '<svg width="140" height="140" viewBox="0 0 140 140"><circle cx="70" cy="70" r="52" fill="none" stroke="var(--border)" stroke-width="14"/><circle cx="70" cy="70" r="52" fill="none" stroke="var(--primary)" stroke-width="14" stroke-linecap="round" stroke-dasharray="' + (c * Math.min(100, p) / 100) + ' ' + c + '" transform="rotate(-90 70 70)"/><text x="70" y="70" text-anchor="middle" font-size="26" font-weight="700" fill="var(--text)">' + p + '%</text><text x="70" y="90" text-anchor="middle" font-size="11" fill="var(--muted)">ครอบคลุม</text></svg>'; }
+function dashCumChart(cum, target) {
+  if (!cum.length) return '<div class="empty-state">ยังไม่มีข้อมูลการฉีด</div>';
+  const W = 560, H = 190, L = 34, R = 8, T = 10, B = 24, t0 = Date.parse(cum[0].date), t1 = Date.parse(cum[cum.length - 1].date), span = Math.max(1, t1 - t0);
+  const top = Math.max(target || 0, cum[cum.length - 1].cum, 1), mx = Math.max(1, ...cum.map(x => x.count));
+  const X = d => L + (cum.length === 1 ? (W - L - R) / 2 : (Date.parse(d) - t0) / span * (W - L - R)), Y = v => T + (1 - v / top) * (H - T - B);
+  const bw = Math.max(2, Math.min(14, (W - L - R) / cum.length * 0.6));
+  const line = cum.map((x, i) => (i ? "L" : "M") + X(x.date).toFixed(1) + " " + Y(x.cum).toFixed(1)).join(" "), base = Y(0);
+  let g = '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%;height:auto;display:block">';
+  [0, .5, 1].forEach(f => { const y = Y(top * f); g += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y + '" y2="' + y + '" stroke="var(--border)"/><text x="' + (L - 5) + '" y="' + (y + 4) + '" text-anchor="end" font-size="10" fill="var(--muted)">' + Math.round(top * f) + '</text>'; });
+  cum.forEach(x => { const h = x.count / mx * (H - T - B) * .45; g += '<rect x="' + (X(x.date) - bw / 2) + '" y="' + (base - h) + '" width="' + bw + '" height="' + h + '" fill="var(--primary)" opacity=".25"><title>' + fmtDate(x.date) + ': ' + x.count + ' โดส</title></rect>'; });
+  if (target) g += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + Y(target) + '" y2="' + Y(target) + '" stroke="#DC2626" stroke-dasharray="5 4"/><text x="' + (W - R) + '" y="' + (Y(target) - 4) + '" text-anchor="end" font-size="10" fill="#DC2626">เป้าหมาย ' + target + '</text>';
+  g += '<path d="' + line + ' L' + X(cum[cum.length - 1].date) + ' ' + base + ' L' + X(cum[0].date) + ' ' + base + ' Z" fill="var(--primary)" opacity=".10"/><path d="' + line + '" fill="none" stroke="var(--primary)" stroke-width="2.5" stroke-linejoin="round"/>';
+  g += '<text x="' + L + '" y="' + (H - 6) + '" font-size="10" fill="var(--muted)">' + fmtDate(cum[0].date) + '</text><text x="' + (W - R) + '" y="' + (H - 6) + '" text-anchor="end" font-size="10" fill="var(--muted)">' + fmtDate(cum[cum.length - 1].date) + '</text></svg>';
+  return g;
+}
+function dashInsightList(d) {
+  const k = d.kpi, I = d.insights, out = [], add = (lv, ic, t) => out.push('<li class="i-' + lv + '"><span class="material-icons-outlined">' + ic + '</span><div>' + t + '</div></li>');
+  const open = d.campaign.status === "open", left = I.dosesLeft;
+  if (k.target && k.complete >= k.target) add("ok", "celebration", "<b>ครบตามเป้าหมายแล้ว</b> ทั้ง " + k.target + " ราย");
+  else if (open && left > 0) {
+    if (I.eta) {
+      const late = d.daysLeft != null && I.eta.days > d.daysLeft;
+      add(late ? "warn" : "info", "speed", "ความเร็ว 14 วันล่าสุด ≈ <b>" + I.eta.rate + " โดส/วัน</b> · ที่เหลืออีก <b>" + left + " โดส</b> คาดว่าครบใน ~" + I.eta.days + " วัน (" + fmtDate(I.eta.date) + ")" + (late ? ' — <b>ช้ากว่าวันสิ้นสุดแคมเปญ</b> ต้องเร่งเป็น ≈ ' + Math.ceil(left / Math.max(1, d.daysLeft)) + " โดส/วัน" : ""));
+    } else add("warn", "pause_circle", "ไม่มีการฉีดใน 14 วันที่ผ่านมา · ยังเหลืออีก <b>" + left + " โดส</b>" + (d.daysLeft != null && d.daysLeft >= 0 ? " ภายใน " + d.daysLeft + " วัน" : ""));
+  }
+  const dp = I.depts.filter(x => x.in_progress + x.not_started > 0);
+  if (dp.length) { const w = dp[0], n = w.in_progress + w.not_started; add("warn", "apartment", "หน่วยงานที่ค้างมากที่สุด: <b>" + escapeHtml(w.name) + "</b> เหลือ " + n + " ราย จากทั้งหมด " + (n + w.complete + w.declined) + " ราย"); }
+  const zero = I.depts.filter(x => x.complete === 0 && x.in_progress + x.not_started >= 3);
+  if (zero.length) add("bad", "report_problem", "<b>" + zero.length + " หน่วยงาน</b> (มีผู้รอฉีดตั้งแต่ 3 รายขึ้นไป) ยังไม่มีผู้ฉีดครบเลย: " + escapeHtml(zero.slice(0, 4).map(x => x.name).join(", ")) + (zero.length > 4 ? " …" : ""));
+  const ag = I.ages.filter(x => x.target >= 5 && x.name !== "ไม่ระบุอายุ").sort((a, b) => a.complete / a.target - b.complete / b.target)[0];
+  if (ag && k.complete < k.target) add("info", "groups", "ช่วงอายุที่ความครอบคลุมต่ำสุด: <b>" + ag.name + " ปี</b> " + Math.round(ag.complete * 100 / ag.target) + "% (" + ag.complete + "/" + ag.target + ")");
+  const nb = I.ages.filter(x => x.name === "ไม่ระบุอายุ")[0]; if (nb) add("warn", "cake", "<b>" + nb.target + " ราย</b> ไม่มีวันเกิด — ระบบจัดกลุ่ม/คำนวณเข็มได้ไม่แม่น ควรเติมข้อมูล");
+  if (d.due.overdue) add("bad", "event_busy", "<b>" + d.due.overdue + " ราย</b> เกินกำหนดนัด — เปิดหน้า \"ติดตาม/นัดหมาย\" เพื่อส่งแจ้งเตือน");
+  if (k.declined) add("info", "block", "ไม่ประสงค์ฉีด <b>" + k.declined + " ราย</b> (" + Math.round(k.declined * 100 / Math.max(1, k.target)) + "% ของเป้าหมาย)");
+  if (k.not_enrolled) add("info", "person_off", "<b>" + k.not_enrolled + " ราย</b> ยังไม่ลงทะเบียน/อยู่นอกกลุ่มเป้าหมายของแคมเปญนี้");
+  if (I.allocated > 0) { const p = Math.round(I.givenTotal * 100 / I.allocated); add(p > 100 ? "bad" : p >= 90 ? "warn" : "info", "inventory_2", "ใช้โควตาวัคซีนแล้ว <b>" + I.givenTotal + "/" + I.allocated + " โดส (" + p + "%)</b>" + (left && I.givenTotal + left > I.allocated ? " — โดสที่ต้องใช้อีก " + left + " <b>เกินโควตา " + (I.givenTotal + left - I.allocated) + " โดส</b>" : "")); }
+  if (I.stock.hasLedger && open && left > I.stock.remaining) add("bad", "local_shipping", "สต็อกคงเหลือ " + I.stock.remaining + " โดส <b>ไม่พอ</b> สำหรับที่ต้องใช้อีก " + left + " โดส");
+  return out.join("") || '<li class="i-info"><span class="material-icons-outlined">info</span><div>ยังไม่มีข้อมูลเพียงพอสำหรับการวิเคราะห์</div></li>';
+}
 function loadDashboard() {
   $("dash-stats").innerHTML = '<div class="stat-card"><span class="skeleton" style="width:60%"></span><span class="skeleton" style="height:28px;width:40%"></span></div>'.repeat(4);
   beginBusy();
   gs.run.withSuccessHandler(busy(d => {
-    const k = d.kpi;
+    const k = d.kpi, I = d.insights, c = d.campaign;
     $("dash-daysleft").classList.toggle("hidden", d.daysLeft == null);
-    if (d.daysLeft != null) { $("dash-daysleft").textContent = d.daysLeft >= 0 ? "เหลือ " + d.daysLeft + " วัน (ถึง " + fmtDate(d.campaign.endDate) + ")" : "เลยกำหนดสิ้นสุด " + (-d.daysLeft) + " วัน"; $("dash-daysleft").style.color = d.daysLeft < 0 ? "var(--danger)" : ""; }
+    if (d.daysLeft != null) { $("dash-daysleft").textContent = d.daysLeft >= 0 ? "เหลือ " + d.daysLeft + " วัน (ถึง " + fmtDate(c.endDate) + ")" : "เลยกำหนดสิ้นสุด " + (-d.daysLeft) + " วัน"; $("dash-daysleft").style.color = d.daysLeft < 0 ? "var(--danger)" : ""; }
     $("dash-alerts").innerHTML = (d.alerts || []).map(a => '<div class="alert-box ' + (a.level === "danger" ? "danger" : "warning") + '"><span class="material-icons-outlined">' + (a.level === "danger" ? "error" : "warning") + '</span><div>' + escapeHtml(a.text) + '</div></div>').join("");
-    const cards = [
-      ["เป้าหมาย (นับผู้ลงทะเบียน/มีประวัติ)", k.target, ""],
-      ["ครบตามกำหนดแล้ว", k.complete, "badge-complete"],
-      ["อยู่ระหว่างฉีด", k.in_progress || 0, "badge-warning"],
-      ["ยังไม่เริ่ม", k.not_started || 0, "badge-incomplete"]
-    ];
-    $("dash-stats").innerHTML = cards.map(c => '<div class="stat-card"><span class="stat-ico material-icons-outlined" style="' + ['','background:rgba(18,165,148,.14);color:#12A594','background:rgba(217,119,6,.14);color:#D97706','background:rgba(220,38,38,.12);color:#DC2626'][cards.indexOf(c)] + '">' + ['groups','verified','pending_actions','notification_important'][cards.indexOf(c)] + '</span><span class="stat-label">' + c[0] + '</span><span class="stat-value">' + c[1] + '</span></div>').join("") +
-      (k.not_enrolled ? '<div class="stat-card"><span class="stat-label">ยังไม่ลงทะเบียน/นอกกลุ่มเป้าหมาย</span><span class="stat-value" style="color:var(--muted)">' + k.not_enrolled + '</span></div>' : "") +
+    $("dash-ring").innerHTML = dashRing(d.coverage);
+    $("dash-title").textContent = c.name;
+    $("dash-sub").textContent = (c.startDate ? fmtDate(c.startDate) : "-") + " – " + (c.endDate ? fmtDate(c.endDate) : "-") + " · " + ({ open: "เปิดรับ", closed: "ปิดแล้ว", draft: "ร่าง" }[c.status] || c.status);
+    $("dash-nums").innerHTML = [["ครบแล้ว", k.complete + "/" + k.target], ["โดสที่ฉีดแล้ว", I.givenTotal], ["14 วันล่าสุด", I.last14 + " โดส"], ["โดสที่ต้องใช้อีก", I.dosesLeft]].map(x => '<div><b>' + x[1] + '</b><span>' + x[0] + '</span></div>').join("");
+    const cards = [["เป้าหมาย (นับผู้ลงทะเบียน/มีประวัติ)", k.target, "groups", ""], ["ครบตามกำหนดแล้ว", k.complete, "verified", "background:rgba(18,165,148,.14);color:#12A594"], ["อยู่ระหว่างฉีด", k.in_progress || 0, "pending_actions", "background:rgba(217,119,6,.14);color:#D97706"], ["ยังไม่เริ่ม", k.not_started || 0, "notification_important", "background:rgba(220,38,38,.12);color:#DC2626"]];
+    $("dash-stats").innerHTML = cards.map(x => '<div class="stat-card"><span class="stat-ico material-icons-outlined" style="' + x[3] + '">' + x[2] + '</span><span class="stat-label">' + x[0] + '</span><span class="stat-value">' + x[1] + '</span></div>').join("") +
       (d.due.overdue ? '<div class="stat-card"><span class="stat-label">เกินกำหนดนัด</span><span class="stat-value" style="color:var(--danger)">' + d.due.overdue + '</span></div>' : "");
-    $("dash-cov-bar").style.width = d.coverage + "%"; $("dash-cov-text").textContent = "ความครอบคลุม " + d.coverage + "% (" + k.complete + "/" + d.kpi.target + " ราย)";
-    const max = Math.max(1, ...d.timeline.map(t => t.count));
-    $("dash-timeline").innerHTML = d.timeline.length ? d.timeline.map(t => '<div title="' + fmtDate(t.date) + ': ' + t.count + ' โดส" style="flex:1;background:linear-gradient(180deg,var(--primary),rgba(var(--primary-rgb),.4));border-radius:3px 3px 0 0;height:' + Math.max(4, t.count / max * 68) + 'px"></div>').join("") : '<div class="card-sub">ยังไม่มีข้อมูลรายวัน</div>';
-    $("dash-dept-body").innerHTML = d.byDept.length ? d.byDept.map(x => '<tr><td>' + escapeHtml(x.name) + '</td><td>' + x.target + '</td><td>' + x.complete + '</td><td style="width:120px"><div class="progress-bar"><div class="progress-fill" style="width:' + Math.round(x.complete / x.target * 100) + '%"></div></div></td></tr>').join("") : '<tr><td colspan="4"><div class="empty-state">ไม่มีข้อมูล</div></td></tr>';
+    $("dash-insights").innerHTML = dashInsightList(d);
+    $("dash-cum").innerHTML = dashCumChart(I.cum, k.target);
+    const showAll = !!STATE.dashDeptAll, dl = showAll ? I.depts : I.depts.slice(0, 10);
+    $("dash-depts").innerHTML = dl.length ? dl.map(x => { const t = x.complete + x.in_progress + x.not_started + x.declined || 1; return '<div class="sb-row"><div class="sb-name" title="' + escapeHtml(x.name) + '">' + escapeHtml(x.name) + '</div><div class="sb-bar"><i style="width:' + x.complete / t * 100 + '%;background:#12A594"></i><i style="width:' + x.in_progress / t * 100 + '%;background:#D97706"></i><i style="width:' + x.not_started / t * 100 + '%;background:#DC2626;opacity:.55"></i><i style="width:' + x.declined / t * 100 + '%;background:#94a3b8"></i></div><div class="sb-val">' + x.complete + '/' + t + '</div></div>'; }).join("") : '<div class="empty-state">ไม่มีข้อมูล</div>';
+    const tg = $("dash-dept-toggle"); tg.classList.toggle("hidden", I.depts.length <= 10); tg.textContent = showAll ? "แสดงเฉพาะ 10 อันดับแรก" : "แสดงทั้งหมด (" + I.depts.length + " หน่วยงาน)"; tg.onclick = () => { STATE.dashDeptAll = !STATE.dashDeptAll; loadDashboard(); };
+    $("dash-ages").innerHTML = I.ages.length ? I.ages.map(x => { const p = Math.round(x.complete * 100 / x.target); return dashBar(x.name === "ไม่ระบุอายุ" ? x.name : x.name + " ปี", p, x.complete + "/" + x.target + " (" + p + "%)", "#12A594"); }).join("") : '<div class="empty-state">ไม่มีข้อมูล</div>';
+    $("dash-compare").innerHTML = I.compare.length ? I.compare.map(x => dashBar(x.name + (x.id === c.id ? " ◀" : ""), x.coverage, x.complete + "/" + x.target + " (" + x.coverage + "%) · " + x.doses + " โดส", x.id === c.id ? "var(--primary)" : "#94a3b8")).join("") : '<div class="empty-state">ไม่มีข้อมูล</div>';
+    const lots = I.stock.lots, ex = x => x.days == null ? '<span class="badge badge-neutral">-</span>' : x.days < 0 ? '<span class="badge badge-incomplete">หมดอายุแล้ว</span>' : x.days <= 30 ? '<span class="badge badge-warning">อีก ' + x.days + ' วัน</span>' : '<span class="badge badge-complete">อีก ' + x.days + ' วัน</span>';
+    $("dash-stock").innerHTML = (I.allocated > 0 ? dashBar("โควตาที่ใช้ไป", Math.round(I.givenTotal * 100 / I.allocated), I.givenTotal + "/" + I.allocated + " โดส", I.givenTotal > I.allocated ? "#DC2626" : "var(--primary)") : "") +
+      (lots.length ? '<div class="table-wrap"><table class="data-table"><thead><tr><th>Lot</th><th>วันหมดอายุ</th><th>สถานะอายุ</th><th>ฉีดไปแล้ว</th><th>คงเหลือ</th></tr></thead><tbody>' + lots.map(x => '<tr><td>' + escapeHtml(x.lotNo) + '</td><td>' + (x.expDate ? fmtDate(x.expDate) : "-") + '</td><td>' + ex(x) + '</td><td>' + x.given + '</td><td>' + (x.remaining == null ? '<span class="card-sub">ไม่มีบัญชีรับเข้า</span>' : x.remaining) + '</td></tr>').join("") + '</tbody></table></div>' : '<div class="empty-state">ยังไม่มี Lot</div>');
     updateBadges(d);
   })).withFailureHandler(busy(e => showToast("โหลดไม่สำเร็จ: " + errMsg(e), "error"))).getDashboard(STATE.campaignId);
 }
@@ -1211,7 +1267,9 @@ function loadStaff(quiet) {   // quiet===true: เรียกจากการ
     }).join("") : '<tr><td colspan="6"><div class="empty-state">ไม่พบข้อมูล</div></td></tr>';
   })).withFailureHandler(busy(e => showToast(errMsg(e), "error"))).listStaff(f);
 }
-["staff-q"].forEach(id => $(id).addEventListener("input", () => { clearTimeout(staffSearchTimer); staffSearchTimer = setTimeout(() => loadStaff(true), 350); }));
+$("staff-q").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); loadStaff(); } });
+$("btn-staff-search").addEventListener("click", () => loadStaff());
+$("btn-staff-clear").addEventListener("click", () => { $("staff-q").value = ""; loadStaff(); $("staff-q").focus(); });
 ["staff-dept-filter", "staff-status-filter", "staff-state-filter"].forEach(id => $(id).addEventListener("change", loadStaff));
 document.addEventListener("click", e => { const tr = e.target.closest(".staff-row-tr"); if (tr) openProfile(tr.dataset.id); });
 
@@ -1871,14 +1929,38 @@ function loadAuditList() { gs.run.withSuccessHandler(rows => { $("audit-body").i
 </script>
 <script>
 /* ============================================================ 13) IMPORT WIZARD (SheetJS ในเบราว์เซอร์ → ส่งเป็นอาเรย์ให้ backend) */
+function wsToRows(ws) {
+  if (!ws || !ws["!ref"]) return [];
+  const rg = XLSX.utils.decode_range(ws["!ref"]), rows = [];
+  for (let r = rg.s.r; r <= rg.e.r; r++) {
+    const row = [];
+    for (let c = rg.s.c; c <= rg.e.c; c++) {
+      const cell = ws[XLSX.utils.encode_cell({ r: r, c: c })];
+      if (!cell || cell.v === undefined || cell.t === "z") { row.push(null); continue; }
+      if (cell.t === "e") { row.push(null); continue; }
+      if (cell.t === "d" && cell.v instanceof Date) {   // กรณีไฟล์เก็บเป็นชนิดวันที่ ISO (ไม่ใช่ .xlsx ปกติ) — ใช้ค่า UTC ตรง ๆ
+        const d = cell.v; row.push(d.getUTCFullYear() + "-" + String(d.getUTCMonth() + 1).padStart(2, "0") + "-" + String(d.getUTCDate()).padStart(2, "0")); continue;
+      }
+      if (cell.t === "n" && cell.z && XLSX.SSF.is_date(cell.z)) {
+        const p = XLSX.SSF.parse_date_code(cell.v);
+        if (p && p.y >= 1900) { row.push(p.y + "-" + String(p.m).padStart(2, "0") + "-" + String(p.d).padStart(2, "0")); continue; }
+      }
+      row.push(cell.v);
+    }
+    rows.push(row);
+  }
+  return rows;
+}
 function readWorkbook(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = ev => {
       try {
-        const wb = XLSX.read(new Uint8Array(ev.target.result), { type: "array", cellDates: true });
+        // อ่านวันที่จากเลขลำดับวันของ Excel โดยตรง (ไม่ใช้ cellDates) — SheetJS แปลงเป็น Date ตามโซนเวลาเครื่อง ทำให้เวลาไทยคลาดไป ~18 นาที
+        // วันที่เที่ยงคืนจึงถอยไปเป็นวันก่อนหน้า (29/6 → 28/6) การแปลงเองด้วยปฏิทินล้วน ๆ ไม่ขึ้นกับโซนเวลาใด ๆ
+        const wb = XLSX.read(new Uint8Array(ev.target.result), { type: "array", cellNF: true });
         const sheets = {};
-        wb.SheetNames.forEach(name => { sheets[name] = XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1, raw: true, defval: null }).map(row => row.map(c => c instanceof Date ? (c.getFullYear() + "-" + String(c.getMonth() + 1).padStart(2, "0") + "-" + String(c.getDate()).padStart(2, "0")) : c)); });
+        wb.SheetNames.forEach(name => { sheets[name] = wsToRows(wb.Sheets[name]); });
         resolve(sheets);
       } catch (e) { reject(e); }
     };
@@ -1899,9 +1981,9 @@ function handleImportFile(file) {
       const s = r.stats;
       $("imp-summary").innerHTML = '<div class="grid-3">' +
         '<div class="stat-card"><span class="stat-label">บุคลากร: ใหม่ / จับคู่กับข้อมูลเดิม</span><span class="stat-value">' + s.staffNew + ' / ' + s.staffMatched + '</span></div>' +
-        '<div class="stat-card"><span class="stat-label">ประวัติการฉีดที่จะเพิ่ม</span><span class="stat-value">' + s.dosesNew + '</span></div>' +
+        '<div class="stat-card"><span class="stat-label">ประวัติการฉีดที่จะเพิ่ม / แก้วันที่ที่คลาด</span><span class="stat-value">' + s.dosesNew + ' / ' + (s.dosesFixed || 0) + '</span></div>' +
         '<div class="stat-card"><span class="stat-label">Lot ที่จะสร้างใหม่</span><span class="stat-value">' + s.lotsNew + '</span></div></div>' +
-        '<div class="card-sub" style="margin:10px 0">หน่วยงานใหม่: ' + s.deptNew + ' • ลงทะเบียนความประสงค์ใหม่: ' + s.enrollNew + ' • ซ้ำกับที่มีอยู่แล้ว (ข้าม): ' + s.dosesDup + ' รายการ</div>' +
+        '<div class="card-sub" style="margin:10px 0">หน่วยงานใหม่: ' + s.deptNew + ' • ลงทะเบียนความประสงค์ใหม่: ' + s.enrollNew + ' • ซ้ำกับที่มีอยู่แล้ว (ข้าม): ' + s.dosesDup + ' รายการ' + ((s.dosesFixed || s.birthFixed || s.apptFixed || s.lotsFixed) ? ' • <b>แก้วันที่ที่เคยคลาด:</b> วันฉีด ' + (s.dosesFixed || 0) + ', วันเกิด ' + (s.birthFixed || 0) + ', วันนัด ' + (s.apptFixed || 0) + ', วันหมดอายุ Lot ' + (s.lotsFixed || 0) : '') + '</div>' +
         '<div class="alert-box ' + (r.counts.error ? "danger" : "info") + '">พบข้อควรตรวจสอบ ' + (r.counts.error + r.counts.warn) + ' รายการ (ข้อผิดพลาด ' + r.counts.error + ', คำเตือน ' + r.counts.warn + ') — กรุณาอ่านรายการด้านล่างก่อนยืนยันนำเข้าจริง</div>';
       renderIssues(r.issues);
       $("imp-actions").classList.toggle("hidden", !!r.counts.error);
